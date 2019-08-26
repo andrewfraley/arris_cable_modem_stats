@@ -1,3 +1,11 @@
+"""
+    Pull stats from Arris Cable modem's web interface
+    Send stats to InfluxDB
+
+    https://github.com/andrewfraley/arris_cable_modem_stats
+"""
+# pylint: disable=line-too-long
+
 import sys
 import time
 import logging
