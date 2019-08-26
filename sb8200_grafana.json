@@ -64,7 +64,7 @@
   "gnetId": null,
   "graphTooltip": 1,
   "id": null,
-  "iteration": 1566785706843,
+  "iteration": 1566832332094,
   "links": [],
   "panels": [
     {
@@ -983,7 +983,7 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "max"
               }
             ]
           ],
@@ -1119,7 +1119,7 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "max"
               }
             ]
           ],
@@ -1456,15 +1456,15 @@
         "allValue": null,
         "current": {},
         "datasource": "${DS_INFLUX-SB8200}",
-        "definition": "",
+        "definition": "select DISTINCT(\"channel_id\") from (select power, channel_id from downstream_statistics WHERE $timeFilter)",
         "hide": 0,
         "includeAll": true,
         "label": null,
         "multi": false,
-        "name": "upstream_channel",
+        "name": "downstream_channel",
         "options": [],
-        "query": "show tag values from upstream_statistics with key = \"channel_id\"",
-        "refresh": 1,
+        "query": "select DISTINCT(\"channel_id\") from (select power, channel_id from downstream_statistics WHERE $timeFilter)",
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 3,
@@ -1478,15 +1478,15 @@
         "allValue": null,
         "current": {},
         "datasource": "${DS_INFLUX-SB8200}",
-        "definition": "",
+        "definition": "select DISTINCT(\"channel_id\") from (select power, channel_id from upstream_statistics WHERE $timeFilter)",
         "hide": 0,
         "includeAll": true,
         "label": null,
         "multi": false,
-        "name": "downstream_channel",
+        "name": "upstream_channel",
         "options": [],
-        "query": "show tag values from downstream_statistics with key = \"channel_id\"",
-        "refresh": 1,
+        "query": "select DISTINCT(\"channel_id\") from (select power, channel_id from upstream_statistics WHERE $timeFilter)",
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 3,
@@ -1530,5 +1530,5 @@
   "timezone": "browser",
   "title": "SB8200",
   "uid": "000000011",
-  "version": 30
+  "version": 36
 }
