@@ -22,3 +22,10 @@ The database will be created automatically if the user has permissions (config.i
 
 ## Grafana
 Import a new dashboard using the sb8200_grafana.json file.  Originally exported from Grafana v6.3.3
+
+## Docker
+Run in a Docker container with:
+
+    docker build -t sb8200 .
+    docker run sb8200
+
