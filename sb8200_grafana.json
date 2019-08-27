@@ -64,7 +64,7 @@
   "gnetId": null,
   "graphTooltip": 1,
   "id": null,
-  "iteration": 1566832332094,
+  "iteration": 1566915100200,
   "links": [],
   "panels": [
     {
@@ -441,7 +441,13 @@
               },
               {
                 "params": [],
-                "type": "mean"
+                "type": "max"
+              },
+              {
+                "params": [
+                  "5m"
+                ],
+                "type": "non_negative_derivative"
               }
             ]
           ],
@@ -458,7 +464,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Downstream Uncorrectables",
+      "title": "Downstream Uncorrectables (non-negative derivative)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1499,7 +1505,7 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {
@@ -1530,5 +1536,5 @@
   "timezone": "browser",
   "title": "SB8200",
   "uid": "000000011",
-  "version": 36
+  "version": 37
 }
