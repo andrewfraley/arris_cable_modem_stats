@@ -1,2 +1,3 @@
+.DS_STORE
 Dockerfile-git_pull
 *.tar.gz
