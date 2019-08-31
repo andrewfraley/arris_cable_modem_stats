@@ -44,7 +44,7 @@ There are two Grafana examples.  The first only relies on the Python script from
 ## Docker
 Run in a Docker container with:
 
-    docker build -t arris_stats https://github.com/andrewfraley/arris_cable_modem_stats
+    docker build -t arris_stats https://github.com/andrewfraley/arris_cable_modem_stats.git
     docker run arris_stats
 
 
