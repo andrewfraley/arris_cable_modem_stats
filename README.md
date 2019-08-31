@@ -8,7 +8,7 @@ This is a Python script to scrape stats from the Arris cable modem web interface
 ## Run Locally
 
 - Install [pipenv](https://github.com/pypa/pipenv). On a Mac with Homebrew, ```brew install pipenv```
-- Install pip dependencies (from the root of this repo): ```pipenv install```
+- Install pip dependencies (run from the script directory of this repo): ```pipenv install```
 - Edit config.ini and change [INFLUXDB] host to your influxdb server
 - ```pipenv run python3 arris_stats.py```
 
