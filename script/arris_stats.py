@@ -177,8 +177,8 @@ def send_to_influx(stats, config):
         config['INFLUXDB']['username'],
         config['INFLUXDB']['password'],
         config['INFLUXDB']['database'],
-        config['INFLUXDB']['use_ssl'],
-        config['INFLUXDB']['verify_ssl']
+        config['INFLUXDB'].getboolean('use_ssl', fallback=False),
+        config['INFLUXDB'].getboolean('verify_ssl', fallback=True)
     )
 
     series = []
