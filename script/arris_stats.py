@@ -184,7 +184,7 @@ def send_to_influx(stats, config):
     series = []
     current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    for stats_down in stats['downstream']:
+    for stats_down in stats['downstream'][1:]:
 
         series.append({
             'measurement': 'downstream_statistics',
@@ -201,7 +201,7 @@ def send_to_influx(stats, config):
             }
         })
 
-    for stats_up in stats['upstream']:
+    for stats_up in stats['upstream'][1:]:
         series.append({
             'measurement': 'upstream_statistics',
             'time': current_time,
