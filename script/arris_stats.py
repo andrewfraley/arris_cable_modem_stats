@@ -8,6 +8,7 @@
 
 import sys
 import time
+import base64
 import logging
 import argparse
 import configparser
@@ -19,13 +20,17 @@ def main():
     """ MAIN """
 
     args = get_args()
-    init_logger(args.debug)
+    # init_logger(args.debug)
+    init_logger(True)
 
     config_path = args.config
     config = get_config(config_path)
-    sleep_interval = int(config['MAIN']['sleep_interval'])
-    destination = config['MAIN']['destination'].lower()
-    modem_model = config['MAIN']['modem_model'].lower()
+    sleep_interval = int(config['MAIN']['sleep_interval'].strip())
+    destination = config['MAIN']['destination'].lower().strip()
+    modem_model = config['MAIN']['modem_model'].lower().strip()
+
+    # SB8200 requires authentication on Comcast, let's get the session started
+    session = start_session(config)
 
     first = True
     while True:
@@ -36,7 +41,7 @@ def main():
         first = False
 
         # Get the HTML from the modem
-        html = get_html(config)
+        html = get_html(config, session)
         if not html:
             logging.error('No HTML to parse, giving up until next interval')
             continue
@@ -63,7 +68,7 @@ def main():
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config.ini', required=False, default='config.ini')
+    parser.add_argument('--config', help='Path to config.ini', required=False, default='script/config.ini')
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
@@ -77,28 +82,57 @@ def get_config(config_path):
     return parser
 
 
-def get_html(config):
+def start_session(config):
+    """ start a requests session
+        If modem_auth_required == true, then get the auth cookie and set it
+    """
+    logging.debug('Starting session')
+    session = requests.session()
+    modem_auth_required = config['MAIN']['modem_auth_required'].lower().strip()
+    logging.debug('modem_auth_required: %s', modem_auth_required)
+
+    if modem_auth_required == 'true':
+        username = config['MAIN']['modem_username']
+        password = config['MAIN']['modem_password']
+        token = username + ":" + password
+        auth_hash = base64.b64encode(token.encode('ascii'))
+        url = config['MAIN']['modem_url'] + '?' + auth_hash.decode()
+        result = session.get(url, verify=False, auth=(username, password))
+
+        credential = result.text
+        logging.debug('credentail: %s', credential)
+
+        session.cookies.set('credential', credential)
+
+    return session
+
+
+def get_html(config, session):
     """ Get the status page from the modem
         return the raw html
     """
-    modem_url = config['MAIN']['modem_url']
+    url = config['MAIN']['modem_url']
+    logging.info('Retreiving stats from %s', url)
+    result = session.get(url, verify=False)
 
-    logging.info('Retreiving stats from %s', modem_url)
+    return result.text
 
-    try:
-        resp = requests.get(modem_url)
-        if resp.status_code != 200:
-            logging.error('Error retreiving html from %s', modem_url)
-            logging.error('Status code: %s', resp.status_code)
-            logging.error('Reason: %s', resp.reason)
-            return None
-        status_html = resp.content.decode("utf-8")
-        resp.close()
-        return status_html
-    except Exception as exception:
-        logging.error(exception)
-        logging.error('Error retreiving html from %s', modem_url)
-        return None
+
+
+    # try:
+    #     resp = requests.get(modem_url)
+    #     if resp.status_code != 200:
+    #         logging.error('Error retreiving html from %s', modem_url)
+    #         logging.error('Status code: %s', resp.status_code)
+    #         logging.error('Reason: %s', resp.reason)
+    #         return None
+    #     status_html = resp.content.decode("utf-8")
+    #     resp.close()
+    #     return status_html
+    # except Exception as exception:
+    #     logging.error(exception)
+    #     logging.error('Error retreiving html from %s', modem_url)
+    #     return None
 
 
 def parse_html_sb8200(html):
@@ -121,9 +155,9 @@ def parse_html_sb8200(html):
     for table_row in soup.find_all("table")[1].find_all("tr"):
         if table_row.th:
             continue
-        
+
         channel_id = table_row.find_all('td')[0].text.strip()
-         
+
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
         if not channel_id.isdigit():
             continue
@@ -156,7 +190,7 @@ def parse_html_sb8200(html):
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
         if not channel_id.isdigit():
             continue
-            
+
         channel_id = table_row.find_all('td')[1].text.strip()
         frequency = table_row.find_all('td')[4].text.replace(" Hz", "").strip()
         power = table_row.find_all('td')[6].text.replace(" dBmV", "").strip()
