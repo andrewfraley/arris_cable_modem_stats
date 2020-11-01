@@ -13,6 +13,7 @@ import logging
 import argparse
 import configparser
 from datetime import datetime
+import urllib3
 import requests
 
 
@@ -20,14 +21,13 @@ def main():
     """ MAIN """
 
     args = get_args()
-    # init_logger(args.debug)
-    init_logger(True)
+    init_logger(args.debug)
 
     config_path = args.config
     config = get_config(config_path)
-    sleep_interval = int(config['MAIN']['sleep_interval'].strip())
-    destination = config['MAIN']['destination'].lower().strip()
-    modem_model = config['MAIN']['modem_model'].lower().strip()
+    sleep_interval = int(config['sleep_interval'])
+    destination = config['destination']
+    modem_model = config['modem_model']
 
     # SB8200 requires authentication on Comcast, let's get the session started
     session = start_session(config)
@@ -57,7 +57,7 @@ def main():
             logging.error('Failed to get any stats, giving up until next interval')
             continue
 
-        # Where should send the results?
+        # Where should 6we send the results?
         if destination == 'influxdb':
             send_to_influx(stats, config)
         else:
@@ -74,12 +74,20 @@ def get_args():
     return args
 
 
-def get_config(config_path):
+def get_config(config_path, section='MAIN'):
     """ Use the config parser to get the config.ini options """
 
     parser = configparser.ConfigParser()
     parser.read(config_path)
-    return parser
+
+    config = dict(parser[section])
+
+    # We need to manipulate some options
+    if section == 'MAIN':
+        config['modem_verify_ssl'] = parser['MAIN'].getboolean('modem_verify_ssl')
+        config['modem_auth_required'] = parser['MAIN'].getboolean('modem_auth_required')
+
+    return config
 
 
 def start_session(config):
@@ -88,16 +96,26 @@ def start_session(config):
     """
     logging.debug('Starting session')
     session = requests.session()
-    modem_auth_required = config['MAIN']['modem_auth_required'].lower().strip()
-    logging.debug('modem_auth_required: %s', modem_auth_required)
 
-    if modem_auth_required == 'true':
-        username = config['MAIN']['modem_username']
-        password = config['MAIN']['modem_password']
+    session.verify = config['modem_verify_ssl']
+
+    # Suppress SSL warnings if verify SSL is false
+    if not session.verify:
+        urllib3.disable_warnings()
+
+    if config['modem_auth_required']:
+        username = config['modem_username']
+        password = config['modem_password']
+
+        # Some shenanigans the Arris page does in the ajax calls to get the cookie hash
+        # They base64 encode the username and password and then provide it as a get parameter
         token = username + ":" + password
         auth_hash = base64.b64encode(token.encode('ascii'))
-        url = config['MAIN']['modem_url'] + '?' + auth_hash.decode()
+        session.auth = (username, password)
+        url = config['modem_url'] + '?' + auth_hash.decode()
+
         result = session.get(url, verify=False, auth=(username, password))
+        result.close()
 
         credential = result.text
         logging.debug('credentail: %s', credential)
@@ -111,28 +129,29 @@ def get_html(config, session):
     """ Get the status page from the modem
         return the raw html
     """
-    url = config['MAIN']['modem_url']
+    url = config['modem_url']
+
     logging.info('Retreiving stats from %s', url)
-    result = session.get(url, verify=False)
 
-    return result.text
+    try:
+        resp = session.get(url)
+        if resp.status_code != 200:
+            logging.error('Error retreiving html from %s', url)
+            logging.error('Status code: %s', resp.status_code)
+            logging.error('Reason: %s', resp.reason)
+            return None
+        status_html = resp.content.decode("utf-8")
+        resp.close()
+    except Exception as exception:
+        logging.error(exception)
+        logging.error('Error retreiving html from %s', url)
+        return None
 
+    if 'Password:' in status_html:
+        logging.error('Authentication error, received login page.  Check username / password.')
+        return None
 
-
-    # try:
-    #     resp = requests.get(modem_url)
-    #     if resp.status_code != 200:
-    #         logging.error('Error retreiving html from %s', modem_url)
-    #         logging.error('Status code: %s', resp.status_code)
-    #         logging.error('Reason: %s', resp.reason)
-    #         return None
-    #     status_html = resp.content.decode("utf-8")
-    #     resp.close()
-    #     return status_html
-    # except Exception as exception:
-    #     logging.error(exception)
-    #     logging.error('Error retreiving html from %s', modem_url)
-    #     return None
+    return status_html
 
 
 def parse_html_sb8200(html):
