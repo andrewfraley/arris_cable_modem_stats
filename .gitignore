@@ -2,3 +2,6 @@
 Dockerfile-git_pull
 *.tar.gz
 venv
+.vscode
+/Pipfile
+/Pipfile.lock
