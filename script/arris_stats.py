@@ -24,13 +24,17 @@ def main():
     init_logger(args.debug)
 
     config_path = args.config
-    config = get_config(config_path)
+    config = get_config(config_path, section='MAIN')
+    all_config = get_config(config_path)
+
     sleep_interval = int(config['sleep_interval'])
     destination = config['destination']
     modem_model = config['modem_model']
 
     # SB8200 requires authentication on Comcast, let's get the session started
-    session = start_session(config)
+    credential = None
+    if config['modem_auth_required']:
+        credential = get_credential(config)
 
     first = True
     while True:
@@ -41,7 +45,7 @@ def main():
         first = False
 
         # Get the HTML from the modem
-        html = get_html(config, session)
+        html = get_html(config, credential)
         if not html:
             logging.error('No HTML to parse, giving up until next interval')
             continue
@@ -59,7 +63,7 @@ def main():
 
         # Where should 6we send the results?
         if destination == 'influxdb':
-            send_to_influx(stats, config)
+            send_to_influx(stats, all_config)
         else:
             logging.error('Destination %s not supported!  Aborting.')
             sys.exit(1)
@@ -74,13 +78,16 @@ def get_args():
     return args
 
 
-def get_config(config_path, section='MAIN'):
+def get_config(config_path, section=None):
     """ Use the config parser to get the config.ini options """
 
     parser = configparser.ConfigParser()
     parser.read(config_path)
 
-    config = dict(parser[section])
+    if section:
+        config = dict(parser[section])
+    else:
+        config = parser
 
     # We need to manipulate some options
     if section == 'MAIN':
@@ -125,16 +132,58 @@ def start_session(config):
     return session
 
 
-def get_html(config, session):
+def get_credential(config):
+    """ Get the cookie credential by sending the
+        username and password pair for basic auth. They
+        also want the pair as a base64 encoded get req param
+    """
+    url = config['modem_url']
+    username = config['modem_username']
+    password = config['modem_password']
+    verify_ssl = config['modem_verify_ssl']
+
+    # We have to send a request with the username and password
+    # encoded as a url param.  Look at the Javascript from the
+    # login page for more info on the following.
+    token = username + ":" + password
+    auth_hash = base64.b64encode(token.encode('ascii'))
+    auth_url = url + '?' + auth_hash.decode()
+    logging.debug('auth_url: %s', auth_url)
+
+    # This is going to respond with our "credential", which is a hash that we
+    # have to send as a cookie with subsequent requests
+    result = requests.get(auth_url, auth=(username, password), verify=verify_ssl)
+    credential = result.text
+    return credential
+
+def get_html(config, credential):
     """ Get the status page from the modem
         return the raw html
     """
     url = config['modem_url']
+    verify_ssl = config['modem_verify_ssl']
+
+    if config['modem_auth_required']:
+        cookies = {
+            'credential': credential,
+        }
+    else:
+        cookies = None
+
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Cache-Control': 'max-age=',
+        'Connection': 'keep-alive',
+        'DNT': '1',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0',
+    }
 
     logging.info('Retreiving stats from %s', url)
 
     try:
-        resp = session.get(url)
+        resp = requests.get(url, headers=headers, cookies=cookies, verify=verify_ssl)
         if resp.status_code != 200:
             logging.error('Error retreiving html from %s', url)
             logging.error('Status code: %s', resp.status_code)
