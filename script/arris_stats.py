@@ -93,7 +93,7 @@ def main():
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config.ini', required=False, default='script/config.ini')
+    parser.add_argument('--config', help='Path to config.ini', required=False, default='config.ini')
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
