@@ -16,6 +16,16 @@ from datetime import datetime
 import urllib3
 import requests
 
+HEADERS = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Cache-Control': 'max-age=',
+    'Connection': 'keep-alive',
+    'DNT': '1',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0',
+}
+
 
 def main():
     """ MAIN """
@@ -131,7 +141,7 @@ def get_credential(config):
     # This is going to respond with our "credential", which is a hash that we
     # have to send as a cookie with subsequent requests
     try:
-        resp = requests.get(auth_url, auth=(username, password), verify=verify_ssl)
+        resp = requests.get(auth_url, headers=HEADERS, auth=(username, password), verify=verify_ssl)
 
         if resp.status_code != 200:
             logging.error('Error authenticating with %s', url)
@@ -162,26 +172,14 @@ def get_html(config, credential):
     verify_ssl = config['modem_verify_ssl']
 
     if config['modem_auth_required']:
-        cookies = {
-            'credential': credential,
-        }
+        cookies = {'credential': credential}
     else:
         cookies = None
-
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Cache-Control': 'max-age=',
-        'Connection': 'keep-alive',
-        'DNT': '1',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0',
-    }
 
     logging.info('Retreiving stats from %s', url)
 
     try:
-        resp = requests.get(url, headers=headers, cookies=cookies, verify=verify_ssl)
+        resp = requests.get(url, headers=HEADERS, cookies=cookies, verify=verify_ssl)
         if resp.status_code != 200:
             logging.error('Error retreiving html from %s', url)
             logging.error('Status code: %s', resp.status_code)
