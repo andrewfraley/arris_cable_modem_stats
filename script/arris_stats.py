@@ -31,10 +31,20 @@ def main():
     destination = config['destination']
     modem_model = config['modem_model']
 
-    # SB8200 requires authentication on Comcast, let's get the session started
+    # Disable the SSL warnings if we're not verifying SSL
+    if not config['modem_verify_ssl']:
+        urllib3.disable_warnings()
+
+    # SB8200 requires authentication on Comcast now
     credential = None
     if config['modem_auth_required']:
-        credential = get_credential(config)
+        # We're doing this in a loop because sometimes the modem refuses to authenticate, we'll keep retrying until it works
+        credential = None
+        while not credential:
+            credential = get_credential(config)
+            if not credential:
+                logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
+                time.sleep(sleep_interval)
 
     first = True
     while True:
@@ -58,7 +68,8 @@ def main():
             sys.exit(1)
 
         if not stats or (not stats['upstream'] and not stats['downstream']):
-            logging.error('Failed to get any stats, giving up until next interval')
+            logging.error(
+                'Failed to get any stats, giving up until next interval')
             continue
 
         # Where should 6we send the results?
@@ -97,46 +108,13 @@ def get_config(config_path, section=None):
     return config
 
 
-def start_session(config):
-    """ start a requests session
-        If modem_auth_required == true, then get the auth cookie and set it
-    """
-    logging.debug('Starting session')
-    session = requests.session()
-
-    session.verify = config['modem_verify_ssl']
-
-    # Suppress SSL warnings if verify SSL is false
-    if not session.verify:
-        urllib3.disable_warnings()
-
-    if config['modem_auth_required']:
-        username = config['modem_username']
-        password = config['modem_password']
-
-        # Some shenanigans the Arris page does in the ajax calls to get the cookie hash
-        # They base64 encode the username and password and then provide it as a get parameter
-        token = username + ":" + password
-        auth_hash = base64.b64encode(token.encode('ascii'))
-        session.auth = (username, password)
-        url = config['modem_url'] + '?' + auth_hash.decode()
-
-        result = session.get(url, verify=False, auth=(username, password))
-        result.close()
-
-        credential = result.text
-        logging.debug('credentail: %s', credential)
-
-        session.cookies.set('credential', credential)
-
-    return session
-
-
 def get_credential(config):
     """ Get the cookie credential by sending the
         username and password pair for basic auth. They
         also want the pair as a base64 encoded get req param
     """
+    logging.info('Obtaining login session from modem')
+
     url = config['modem_url']
     username = config['modem_username']
     password = config['modem_password']
@@ -152,9 +130,29 @@ def get_credential(config):
 
     # This is going to respond with our "credential", which is a hash that we
     # have to send as a cookie with subsequent requests
-    result = requests.get(auth_url, auth=(username, password), verify=verify_ssl)
-    credential = result.text
+    try:
+        resp = requests.get(auth_url, auth=(username, password), verify=verify_ssl)
+
+        if resp.status_code != 200:
+            logging.error('Error authenticating with %s', url)
+            logging.error('Status code: %s', resp.status_code)
+            logging.error('Reason: %s', resp.reason)
+            return None
+
+        credential = resp.text
+        resp.close()
+    except Exception as exception:
+        logging.error(exception)
+        logging.error('Error authenticating with %s', url)
+        return None
+
+    if 'Password:' in credential:
+        logging.error(
+            'Authentication error, received login page.  Check username / password.')
+        return None
+
     return credential
+
 
 def get_html(config, credential):
     """ Get the status page from the modem
@@ -198,6 +196,8 @@ def get_html(config, credential):
 
     if 'Password:' in status_html:
         logging.error('Authentication error, received login page.  Check username / password.')
+        if not config['modem_auth_required']:
+            logging.warning('You have modem_auth_required to False, but a login page was detected!')
         return None
 
     return status_html
@@ -332,7 +332,8 @@ def send_to_influx(stats, config):
 
         # If DB doesn't exist, try to create it
         if hasattr(exception, 'code') and exception.code == 404:
-            logging.warning('Database %s Does Not Exist.  Attempting to create database', config['INFLUXDB']['database'])
+            logging.warning('Database %s Does Not Exist.  Attempting to create database',
+                            config['INFLUXDB']['database'])
             influx_client.create_database(config['INFLUXDB']['database'])
             influx_client.write_points(series)
         else:
