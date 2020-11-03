@@ -5,4 +5,4 @@ WORKDIR /src
 
 RUN pip install -r requirements.txt
 
-CMD python3 arris_stats.py
+CMD python3 arris_stats.py --config config.ini
