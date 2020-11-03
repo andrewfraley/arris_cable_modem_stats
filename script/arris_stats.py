@@ -8,11 +8,23 @@
 
 import sys
 import time
+import base64
 import logging
 import argparse
 import configparser
 from datetime import datetime
+import urllib3
 import requests
+
+HEADERS = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Cache-Control': 'max-age=',
+    'Connection': 'keep-alive',
+    'DNT': '1',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0',
+}
 
 
 def main():
@@ -22,10 +34,27 @@ def main():
     init_logger(args.debug)
 
     config_path = args.config
-    config = get_config(config_path)
-    sleep_interval = int(config['MAIN']['sleep_interval'])
-    destination = config['MAIN']['destination'].lower()
-    modem_model = config['MAIN']['modem_model'].lower()
+    config = get_config(config_path, section='MAIN')
+    all_config = get_config(config_path)
+
+    sleep_interval = int(config['sleep_interval'])
+    destination = config['destination']
+    modem_model = config['modem_model']
+
+    # Disable the SSL warnings if we're not verifying SSL
+    if not config['modem_verify_ssl']:
+        urllib3.disable_warnings()
+
+    # SB8200 requires authentication on Comcast now
+    credential = None
+    if config['modem_auth_required']:
+        # We're doing this in a loop because sometimes the modem refuses to authenticate, we'll keep retrying until it works
+        credential = None
+        while not credential:
+            credential = get_credential(config)
+            if not credential:
+                logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
+                time.sleep(sleep_interval)
 
     first = True
     while True:
@@ -36,7 +65,7 @@ def main():
         first = False
 
         # Get the HTML from the modem
-        html = get_html(config)
+        html = get_html(config, credential)
         if not html:
             logging.error('No HTML to parse, giving up until next interval')
             continue
@@ -49,12 +78,13 @@ def main():
             sys.exit(1)
 
         if not stats or (not stats['upstream'] and not stats['downstream']):
-            logging.error('Failed to get any stats, giving up until next interval')
+            logging.error(
+                'Failed to get any stats, giving up until next interval')
             continue
 
-        # Where should send the results?
+        # Where should 6we send the results?
         if destination == 'influxdb':
-            send_to_influx(stats, config)
+            send_to_influx(stats, all_config)
         else:
             logging.error('Destination %s not supported!  Aborting.')
             sys.exit(1)
@@ -63,42 +93,112 @@ def main():
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config.ini', required=False, default='config.ini')
+    parser.add_argument('--config', help='Path to config.ini', required=False, default='script/config.ini')
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
 
 
-def get_config(config_path):
+def get_config(config_path, section=None):
     """ Use the config parser to get the config.ini options """
 
     parser = configparser.ConfigParser()
     parser.read(config_path)
-    return parser
+
+    if section:
+        config = dict(parser[section])
+    else:
+        config = parser
+
+    # We need to manipulate some options
+    if section == 'MAIN':
+        config['modem_verify_ssl'] = parser['MAIN'].getboolean('modem_verify_ssl')
+        config['modem_auth_required'] = parser['MAIN'].getboolean('modem_auth_required')
+
+    return config
 
 
-def get_html(config):
+def get_credential(config):
+    """ Get the cookie credential by sending the
+        username and password pair for basic auth. They
+        also want the pair as a base64 encoded get req param
+    """
+    logging.info('Obtaining login session from modem')
+
+    url = config['modem_url']
+    username = config['modem_username']
+    password = config['modem_password']
+    verify_ssl = config['modem_verify_ssl']
+
+    # We have to send a request with the username and password
+    # encoded as a url param.  Look at the Javascript from the
+    # login page for more info on the following.
+    token = username + ":" + password
+    auth_hash = base64.b64encode(token.encode('ascii'))
+    auth_url = url + '?' + auth_hash.decode()
+    logging.debug('auth_url: %s', auth_url)
+
+    # This is going to respond with our "credential", which is a hash that we
+    # have to send as a cookie with subsequent requests
+    try:
+        resp = requests.get(auth_url, headers=HEADERS, auth=(username, password), verify=verify_ssl)
+
+        if resp.status_code != 200:
+            logging.error('Error authenticating with %s', url)
+            logging.error('Status code: %s', resp.status_code)
+            logging.error('Reason: %s', resp.reason)
+            return None
+
+        credential = resp.text
+        resp.close()
+    except Exception as exception:
+        logging.error(exception)
+        logging.error('Error authenticating with %s', url)
+        return None
+
+    if 'Password:' in credential:
+        logging.error(
+            'Authentication error, received login page.  Check username / password.')
+        return None
+
+    return credential
+
+
+def get_html(config, credential):
     """ Get the status page from the modem
         return the raw html
     """
-    modem_url = config['MAIN']['modem_url']
+    url = config['modem_url']
+    verify_ssl = config['modem_verify_ssl']
 
-    logging.info('Retreiving stats from %s', modem_url)
+    if config['modem_auth_required']:
+        cookies = {'credential': credential}
+    else:
+        cookies = None
+
+    logging.info('Retreiving stats from %s', url)
 
     try:
-        resp = requests.get(modem_url)
+        resp = requests.get(url, headers=HEADERS, cookies=cookies, verify=verify_ssl)
         if resp.status_code != 200:
-            logging.error('Error retreiving html from %s', modem_url)
+            logging.error('Error retreiving html from %s', url)
             logging.error('Status code: %s', resp.status_code)
             logging.error('Reason: %s', resp.reason)
             return None
         status_html = resp.content.decode("utf-8")
         resp.close()
-        return status_html
     except Exception as exception:
         logging.error(exception)
-        logging.error('Error retreiving html from %s', modem_url)
+        logging.error('Error retreiving html from %s', url)
         return None
+
+    if 'Password:' in status_html:
+        logging.error('Authentication error, received login page.  Check username / password.')
+        if not config['modem_auth_required']:
+            logging.warning('You have modem_auth_required to False, but a login page was detected!')
+        return None
+
+    return status_html
 
 
 def parse_html_sb8200(html):
@@ -121,9 +221,9 @@ def parse_html_sb8200(html):
     for table_row in soup.find_all("table")[1].find_all("tr"):
         if table_row.th:
             continue
-        
+
         channel_id = table_row.find_all('td')[0].text.strip()
-         
+
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
         if not channel_id.isdigit():
             continue
@@ -156,7 +256,7 @@ def parse_html_sb8200(html):
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
         if not channel_id.isdigit():
             continue
-            
+
         channel_id = table_row.find_all('td')[1].text.strip()
         frequency = table_row.find_all('td')[4].text.replace(" Hz", "").strip()
         power = table_row.find_all('td')[6].text.replace(" dBmV", "").strip()
@@ -230,7 +330,8 @@ def send_to_influx(stats, config):
 
         # If DB doesn't exist, try to create it
         if hasattr(exception, 'code') and exception.code == 404:
-            logging.warning('Database %s Does Not Exist.  Attempting to create database', config['INFLUXDB']['database'])
+            logging.warning('Database %s Does Not Exist.  Attempting to create database',
+                            config['INFLUXDB']['database'])
             influx_client.create_database(config['INFLUXDB']['database'])
             influx_client.write_points(series)
         else:
