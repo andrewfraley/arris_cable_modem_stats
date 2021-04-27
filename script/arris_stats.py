@@ -68,7 +68,8 @@ def main():
         html = get_html(config, credential)
         if not html:
             logging.error('No HTML to parse, giving up until next interval')
-            continue
+            logging.info('Returning to main to re-auth')
+            main()
 
         # Parse the HTML to get our stats
         if modem_model == 'sb8200':
