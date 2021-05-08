@@ -47,14 +47,7 @@ def main():
 
     # SB8200 requires authentication on Comcast now
     credential = None
-    if config['modem_auth_required']:
-        # We're doing this in a loop because sometimes the modem refuses to authenticate, we'll keep retrying until it works
-        credential = None
-        while not credential:
-            credential = get_credential(config)
-            if not credential:
-                logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
-                time.sleep(sleep_interval)
+
 
     first = True
     while True:
@@ -64,10 +57,24 @@ def main():
             time.sleep(sleep_interval)
         first = False
 
+        if config['modem_auth_required']:
+            while not credential:
+                credential = get_credential(config)
+                if not credential and config['exit_on_auth_error']:
+                    sys.exit('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True')
+                if not credential:
+                    logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
+                    time.sleep(sleep_interval)
+
         # Get the HTML from the modem
         html = get_html(config, credential)
         if not html:
+            if config['exit_on_html_error']:
+                sys.exit('No HTML obtained from modem.  Exiting since exit_on_html_error is True')
             logging.error('No HTML to parse, giving up until next interval')
+            if config['clear_auth_token_on_html_error']:
+                logging.info('clear_auth_token_on_html_error is true, clearing credential token')
+                credential = None
             continue
 
         # Parse the HTML to get our stats
@@ -88,6 +95,7 @@ def main():
         else:
             logging.error('Destination %s not supported!  Aborting.')
             sys.exit(1)
+
 
 
 def get_args():
@@ -114,6 +122,9 @@ def get_config(config_path, section=None):
     if section == 'MAIN':
         config['modem_verify_ssl'] = parser['MAIN'].getboolean('modem_verify_ssl')
         config['modem_auth_required'] = parser['MAIN'].getboolean('modem_auth_required')
+        config['exit_on_auth_error'] = parser['MAIN'].getboolean('exit_on_auth_error')
+        config['exit_on_html_error'] = parser['MAIN'].getboolean('exit_on_html_error')
+        config['clear_auth_token_on_html_error'] = parser['MAIN'].getboolean('clear_auth_token_on_html_error')
 
     return config
 
