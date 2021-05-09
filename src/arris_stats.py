@@ -35,8 +35,7 @@ def main():
     init_logger(args.debug)
 
     config_path = args.config
-    config = get_config(config_path, section='MAIN')
-    all_config = get_config(config_path)
+    config = get_config(config_path)
 
     sleep_interval = int(config['sleep_interval'])
     destination = config['destination']
@@ -61,7 +60,8 @@ def main():
             while not credential:
                 credential = get_credential(config)
                 if not credential and config['exit_on_auth_error']:
-                    sys.exit('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True')
+                    logging.error('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True')
+                    sys.exit(1)
                 if not credential:
                     logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
                     time.sleep(sleep_interval)
@@ -70,7 +70,8 @@ def main():
         html = get_html(config, credential)
         if not html:
             if config['exit_on_html_error']:
-                sys.exit('No HTML obtained from modem.  Exiting since exit_on_html_error is True')
+                logging.error('No HTML obtained from modem.  Exiting since exit_on_html_error is True')
+                sys.exit(1)
             logging.error('No HTML to parse, giving up until next interval')
             if config['clear_auth_token_on_html_error']:
                 logging.info('clear_auth_token_on_html_error is true, clearing credential token')
@@ -91,7 +92,7 @@ def main():
 
         # Where should 6we send the results?
         if destination == 'influxdb':
-            send_to_influx(stats, all_config)
+            send_to_influx(stats, config)
         else:
             logging.error('Destination %s not supported!  Aborting.')
             sys.exit(1)
@@ -100,19 +101,21 @@ def main():
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config.ini', required=False, default='script/config.ini')
+    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=True)
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
 
 
 def get_config(config_path=None):
-    """ Use the config parser to get the config.ini options """
+    """ Grab config from the ini config file,
+        then grab the same variables from ENV to override
+    """
 
     default_config = {
 
         # Main
-        'stats_destination': 'influxdb',
+        'destination': 'influxdb',
         'sleep_interval': 300,
         'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
         'modem_verify_ssl': False,
@@ -133,6 +136,7 @@ def get_config(config_path=None):
         'influx_use_ssl': False,
         'influx_verify_ssl': True,
     }
+
     config = default_config.copy()
 
     # Get config from config.ini first
@@ -211,8 +215,7 @@ def get_credential(config):
         return None
 
     if 'Password:' in credential:
-        logging.error(
-            'Authentication error, received login page.  Check username / password.')
+        logging.error('Authentication error, received login page.  Check username / password.  SB8200 has some kind of bug that can cause this after too many authentications, the only known fix is to reboot the modem.')
         return None
 
     return credential
@@ -247,7 +250,7 @@ def get_html(config, credential):
         return None
 
     if 'Password:' in status_html:
-        logging.error('Authentication error, received login page.  Check username / password.')
+        logging.error('Authentication error, received login page.  Check username / password.  SB8200 has some kind of bug that can cause this after too many authentications, the only known fix is to reboot the modem.')
         if not config['modem_auth_required']:
             logging.warning('You have modem_auth_required to False, but a login page was detected!')
         return None
@@ -330,19 +333,19 @@ def parse_html_sb8200(html):
 
 def send_to_influx(stats, config):
     """ Send the stats to InfluxDB """
-    logging.info('Sending stats to InfluxDB (%s:%s)', config['INFLUXDB']['host'], config['INFLUXDB']['port'])
+    logging.info('Sending stats to InfluxDB (%s:%s)', config['influx_host'], config['influx_port'])
 
     from influxdb import InfluxDBClient
     from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 
     influx_client = InfluxDBClient(
-        config['INFLUXDB']['host'],
-        config['INFLUXDB']['port'],
-        config['INFLUXDB']['username'],
-        config['INFLUXDB']['password'],
-        config['INFLUXDB']['database'],
-        config['INFLUXDB'].getboolean('use_ssl', fallback=False),
-        config['INFLUXDB'].getboolean('verify_ssl', fallback=True)
+        config['influx_host'],
+        config['influx_port'],
+        config['influx_username'],
+        config['influx_password'],
+        config['influx_database'],
+        config['influx_use_ssl'],
+        config['influx_verify_ssl'],
     )
 
     series = []
@@ -380,13 +383,13 @@ def send_to_influx(stats, config):
 
     try:
         influx_client.write_points(series)
-    except (InfluxDBClientError, ConnectionError, InfluxDBServerError) as exception:
+    except (InfluxDBClientError, ConnectionError, InfluxDBServerError, ConnectionRefusedError) as exception:
 
         # If DB doesn't exist, try to create it
         if hasattr(exception, 'code') and exception.code == 404:
             logging.warning('Database %s Does Not Exist.  Attempting to create database',
-                            config['INFLUXDB']['database'])
-            influx_client.create_database(config['INFLUXDB']['database'])
+                            config['influx_database'])
+            influx_client.create_database(config['influx_database'])
             influx_client.write_points(series)
         else:
             logging.error(exception)

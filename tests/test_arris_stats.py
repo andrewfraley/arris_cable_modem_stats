@@ -10,7 +10,7 @@ class TestArrisStats(unittest.TestCase):
     default_config = {
 
         # Main
-        'stats_destination': 'influxdb',
+        'destination': 'influxdb',
         'sleep_interval': 300,
         'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
         'modem_verify_ssl': False,
