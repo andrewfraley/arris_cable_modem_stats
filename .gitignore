@@ -5,3 +5,4 @@ venv
 .vscode
 /Pipfile
 /Pipfile.lock
+*.pyc

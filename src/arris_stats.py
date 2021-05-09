@@ -6,6 +6,7 @@
 """
 # pylint: disable=line-too-long
 
+import os
 import sys
 import time
 import base64
@@ -47,7 +48,6 @@ def main():
 
     # SB8200 requires authentication on Comcast now
     credential = None
-
 
     first = True
     while True:
@@ -97,7 +97,6 @@ def main():
             sys.exit(1)
 
 
-
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
@@ -107,24 +106,68 @@ def get_args():
     return args
 
 
-def get_config(config_path, section=None):
+def get_config(config_path=None):
     """ Use the config parser to get the config.ini options """
 
-    parser = configparser.ConfigParser()
-    parser.read(config_path)
+    default_config = {
 
-    if section:
-        config = dict(parser[section])
-    else:
-        config = parser
+        # Main
+        'stats_destination': 'influxdb',
+        'sleep_interval': 300,
+        'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
+        'modem_verify_ssl': False,
+        'modem_auth_required': False,
+        'modem_username': 'admin',
+        'modem_password': None,
+        'modem_model': 'sb8200',
+        'exit_on_auth_error': True,
+        'exit_on_html_error': True,
+        'clear_auth_token_on_html_error': True,
 
-    # We need to manipulate some options
-    if section == 'MAIN':
-        config['modem_verify_ssl'] = parser['MAIN'].getboolean('modem_verify_ssl')
-        config['modem_auth_required'] = parser['MAIN'].getboolean('modem_auth_required')
-        config['exit_on_auth_error'] = parser['MAIN'].getboolean('exit_on_auth_error')
-        config['exit_on_html_error'] = parser['MAIN'].getboolean('exit_on_html_error')
-        config['clear_auth_token_on_html_error'] = parser['MAIN'].getboolean('clear_auth_token_on_html_error')
+        # Influx
+        'influx_host': 'localhost',
+        'influx_port': 8086,
+        'influx_database': 'cable_modem_stats',
+        'influx_username': None,
+        'influx_password': None,
+        'influx_use_ssl': False,
+        'influx_verify_ssl': True,
+    }
+    config = default_config.copy()
+
+    # Get config from config.ini first
+    if config_path:
+
+        # Some hacky action to get the config without using section headings in the file
+        # https://stackoverflow.com/a/10746467/866057
+        parser = configparser.RawConfigParser()
+        section = 'MAIN'
+        with open(config_path) as f:
+            file_content = '[%s]\n' % section + f.read()
+        parser.read_string(file_content)
+
+        for param in default_config:
+            config[param] = parser[section].get(param, default_config[param])
+
+    # Get it from ENV now and override anything we find
+    for param in config:
+        if os.environ.get(param):
+            config[param] = os.environ.get(param)
+
+    # Special handling depending ontype
+    for param in config:
+
+        # If the default value is a boolean, but we have a string, convert it
+        if isinstance(default_config[param], bool) and isinstance(config[param], str):
+            config[param] = str_to_bool(string=config[param], name=param)
+
+        # If the default value is an int, but we have a string, convert it
+        if isinstance(default_config[param], int) and isinstance(config[param], str):
+            config[param] = int(config[param])
+
+        # Finally any 'None' string should just be None
+        if default_config[param] is None and config[param] == 'None':
+            config[param] = None
 
     return config
 
@@ -366,6 +409,16 @@ def read_html():
     with open("/tmp/html", "rb") as text_file:
         html = text_file.read()
     return html
+
+
+def str_to_bool(string, name):
+    """ Return True is string ~= 'true' """
+    if string.lower() == 'true':
+        return True
+    if string.lower() == 'false':
+        return False
+
+    raise ValueError('Config parameter % s should be boolean "true" or "false", but value is neither of those.' % name)
 
 
 def init_logger(debug=False):
