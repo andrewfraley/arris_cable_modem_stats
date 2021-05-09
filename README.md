@@ -4,18 +4,51 @@ This is a Python script to scrape stats from the Arris cable modem web interface
 
 
 ## Authentication
-In late Oct 2020, Comcast deployed firmware updates to the SB8200 which now require authenticating against the modem.  If your modem requires authentication (you get a login page when browsing to https://192.168.100.1/), then you must edit your config.ini file and set ```modem_auth_required``` to ```True```, and set ```modem_password``` appropriately.  By default, your modem's password is the last eight characters of the serial number, located on a sticker on the bottom of the modem.
+In late Oct 2020, Comcast deployed firmware updates to the SB8200 which now require authenticating against the modem.  If your modem requires authentication (you get a login page when browsing to https://192.168.100.1/), then you must edit your config.ini file (or set the matching ENV variables) and set ```modem_auth_required``` to ```True```, and set ```modem_password``` appropriately.  By default, your modem's password is the last eight characters of the serial number, located on a sticker on the bottom of the modem.
+
+There is some kind of bug (at least with Comcast's firmware) where the modem cannot handle more than ~10 sessions.  Once those sessions have been used up, it seems you must wait for them to expire or reboot the modem.  I have not been able to successfully log out of the sessions, but this script attempts to keep reusing the same session as long as it can.
 
 ## Run Locally
 
 - Install [pipenv](https://github.com/pypa/pipenv). On a Mac with Homebrew, ```brew install pipenv```
 - Install pip dependencies (run from the script directory of this repo): ```pipenv install```
-- Edit config.ini and change [INFLUXDB] host to your influxdb server
-- ```pipenv run python3 arris_stats.py```
+- Edit config.ini and change influx_host to your influxdb server
+- ```pipenv run python3 arris_stats.py --config config.ini```
+
+## Docker
+Run in a Docker container with:
+
+    docker build -t arris_stats .
+    docker run arris_stats
+
+Note that the same parameters from config.ini can be set as ENV variables, ENV overrides config.ini.
+
+## Config Settings
+Config settings can be provided by the config.ini file, or set as ENV variables.  ENV variables override config.ini.
+
+- destination = influxdb
+- sleep_interval = 300
+- modem_url = https://192.168.100.1/cmconnectionstatus.html
+- modem_verify_ssl = False
+- modem_auth_required = False
+- modem_username = admin
+- modem_password = None
+- modem_model = sb8200
+- exit_on_auth_error = True
+- exit_on_html_error = True
+- clear_auth_token_on_html_error = True
+- sleep_before_exit = False
+- influx_host = localhost
+- influx_port = 8086
+- influx_database = cable_modem_stats
+- influx_username = None
+- influx_password = None
+- influx_use_ssl = False
+- influx_verify_ssl = True
 
 
 ### Debugging
-```pipenv run python3 sb8200_stats.py  --debug```
+```pipenv run python3 sb8200_stats.py --debug --config config.ini```
 
 ## InfluxDB
 The database will be created automatically if the user has permissions (config.ini defaults to anonymous access).  You can set the database name in config.ini using the [INFLUXDB] database parameter.
@@ -40,10 +73,3 @@ There are two Grafana examples.  The first only relies on the Python script from
 - Import [grafana/internet_uptime.json](grafana/internet_uptime.json) into Grafana
 
 ![Internet Uptime](readme/internet_uptime.png)
-
-
-## Docker
-Run in a Docker container with:
-
-    docker build -t arris_stats .
-    docker run arris_stats
