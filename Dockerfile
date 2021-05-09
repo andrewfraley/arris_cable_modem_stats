@@ -1,5 +1,6 @@
 FROM python:3.8.5-alpine
 
+ENV arris_stats_debug False
 ENV destination influxdb
 ENV sleep_interval 300
 ENV modem_url https://192.168.100.1/cmconnectionstatus.html

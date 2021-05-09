@@ -37,6 +37,10 @@ def main():
     config_path = args.config
     config = get_config(config_path)
 
+    # Re-init the logger if we set arris_stats_debug in ENV or config.ini
+    if config['arris_stats_debug']:
+        init_logger(True)
+
     sleep_interval = int(config['sleep_interval'])
     destination = config['destination']
     modem_model = config['modem_model']
@@ -111,6 +115,7 @@ def get_config(config_path=None):
     default_config = {
 
         # Main
+        'arris_stats_debug': False,
         'destination': 'influxdb',
         'sleep_interval': 300,
         'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
@@ -439,7 +444,15 @@ def init_logger(debug=False):
     else:
         level = logging.INFO
 
-    logging.basicConfig(level=level, format=log_format)
+    # https://stackoverflow.com/a/61516733/866057
+    try:
+        root_logger = logging.getLogger()
+        root_logger.setLevel(level)
+        root_handler = root_logger.handlers[0]
+        root_handler.setFormatter(logging.Formatter(log_format))
+    except IndexError:
+        logging.basicConfig(level=level, format=log_format)
+
 
 
 if __name__ == '__main__':
