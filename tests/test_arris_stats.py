@@ -2,7 +2,7 @@ import os
 import re
 import unittest
 import tempfile
-import arris_stats
+import src.arris_stats as arris_stats
 
 
 class TestArrisStats(unittest.TestCase):
@@ -11,6 +11,7 @@ class TestArrisStats(unittest.TestCase):
     default_config = {
 
         # Main
+        'arris_stats_debug': False,
         'destination': 'influxdb',
         'sleep_interval': 300,
         'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
