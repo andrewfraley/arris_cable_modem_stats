@@ -1,4 +1,5 @@
 import os
+import re
 import unittest
 import tempfile
 import arris_stats
@@ -21,6 +22,7 @@ class TestArrisStats(unittest.TestCase):
         'exit_on_auth_error': True,
         'exit_on_html_error': True,
         'clear_auth_token_on_html_error': True,
+        'sleep_before_exit': True,
 
         # Influx
         'influx_host': 'localhost',
@@ -88,6 +90,38 @@ class TestArrisStats(unittest.TestCase):
             if isinstance(default_config, bool):
                 self.assertIsInstance(config[param], bool)
                 self.assertEqual(config[param], not default_config[param])
+
+    def test_dockerfile(self):
+        """ Ensure the docker file has the same hard coded ENV defaults """
+        default_config = self.default_config.copy()
+        path = 'Dockerfile'
+        with open(path, "r") as dockerfile:
+            dockerfile_contents = dockerfile.read().splitlines()
+        for line in dockerfile_contents:
+            if re.match(r'^ENV \S+ \S+$', line):
+                param = line.split(' ')[1]
+                value = line.split(' ')[2]
+                self.assertEqual(str(default_config[param]), value)  # Param is in Dockerfile but not default_config, or default values do not match
+                del default_config[param]  # Delete it once found so we can identify missing params
+
+        empty_dict = {}
+        self.assertEqual(default_config, empty_dict)  # default_config should be empty, if not then the Dockerfile is missing params
+
+    def test_config_file(self):
+        """ Ensure the config file as the same hard coded defaults as default_config """
+
+        default_config = self.default_config.copy()
+        path = 'src/config.ini'
+        with open(path, "r") as configfile:
+            config_contents = configfile.read().splitlines()
+        for line in config_contents:
+            param = line.split(' = ')[0]
+            value = line.split(' = ')[1]
+            self.assertEqual(str(default_config[param]), value)  # Param is in config file but not default_config, or default values do not match
+            del default_config[param]  # Delete it once found so we can identify missing params
+
+        empty_dict = {}
+        self.assertEqual(default_config, empty_dict)  # default_config should be empty, if not then the Dockerfile is missing params
 
 
 if __name__ == '__main__':

@@ -60,8 +60,7 @@ def main():
             while not credential:
                 credential = get_credential(config)
                 if not credential and config['exit_on_auth_error']:
-                    logging.error('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True')
-                    sys.exit(1)
+                    error_exit('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True', config)
                 if not credential:
                     logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
                     time.sleep(sleep_interval)
@@ -70,8 +69,7 @@ def main():
         html = get_html(config, credential)
         if not html:
             if config['exit_on_html_error']:
-                logging.error('No HTML obtained from modem.  Exiting since exit_on_html_error is True')
-                sys.exit(1)
+                error_exit('No HTML obtained from modem.  Exiting since exit_on_html_error is True', config)
             logging.error('No HTML to parse, giving up until next interval')
             if config['clear_auth_token_on_html_error']:
                 logging.info('clear_auth_token_on_html_error is true, clearing credential token')
@@ -82,8 +80,7 @@ def main():
         if modem_model == 'sb8200':
             stats = parse_html_sb8200(html)
         else:
-            logging.error('Modem model %s not supported!  Aborting')
-            sys.exit(1)
+            error_exit('Modem model %s not supported!  Aborting', sleep=False)
 
         if not stats or (not stats['upstream'] and not stats['downstream']):
             logging.error(
@@ -94,8 +91,7 @@ def main():
         if destination == 'influxdb':
             send_to_influx(stats, config)
         else:
-            logging.error('Destination %s not supported!  Aborting.')
-            sys.exit(1)
+            error_exit('Destination %s not supported!  Aborting.' % destination, sleep=False)
 
 
 def get_args():
@@ -126,6 +122,7 @@ def get_config(config_path=None):
         'exit_on_auth_error': True,
         'exit_on_html_error': True,
         'clear_auth_token_on_html_error': True,
+        'sleep_before_exit': True,
 
         # Influx
         'influx_host': 'localhost',
@@ -399,6 +396,15 @@ def send_to_influx(stats, config):
     logging.info('Successfully wrote data to InfluxDB')
     logging.debug('Influx series sent to db:')
     logging.debug(series)
+
+
+def error_exit(message, config=None, sleep=True):
+    """ Log error, sleep if needed, then exit 1 """
+    logging.error(message)
+    if sleep and config and config['sleep_before_exit']:
+        logging.info('Sleeping for %s seconds before exiting since sleep_before_exit is True', config['sleep_interval'])
+        time.sleep(config['sleep_interval'])
+    sys.exit(1)
 
 
 def write_html(html):
