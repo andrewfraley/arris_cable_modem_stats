@@ -27,7 +27,9 @@ Note that the same parameters from config.ini can be set as ENV variables, ENV o
 Config settings can be provided by the config.ini file, or set as ENV variables.  ENV variables override config.ini.
 
 - arris_stats_debug = False
+    - enables debug logs
 - destination = influxdb
+    - influxdb is the only valid option at this time
 - sleep_interval = 300
 - modem_url = https://192.168.100.1/cmconnectionstatus.html
 - modem_verify_ssl = False
@@ -35,13 +37,19 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - modem_username = admin
 - modem_password = None
 - modem_model = sb8200
+    - only sb8200 is supported at this time
 - exit_on_auth_error = True
+    - Any auth error will cause an exit, useful when running in a Docker container to get a new session
 - exit_on_html_error = True
+    - Any error retrieving the html will cause an exit, mostly redundant with exit_on_auth_error
 - clear_auth_token_on_html_error = True
-- sleep_before_exit = False
+    - This is useful if you don't want to exit, but do want to get a new session if/when getting the stats fails
+- sleep_before_exit = True
+    - If you want to sleep before exiting on errors, useful for Docker container when you have restart = always
 - influx_host = localhost
 - influx_port = 8086
 - influx_database = cable_modem_stats
+    - This will be created automatically if it can
 - influx_username = None
 - influx_password = None
 - influx_use_ssl = False
