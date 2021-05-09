@@ -6,6 +6,7 @@
 """
 # pylint: disable=line-too-long
 
+import os
 import sys
 import time
 import base64
@@ -34,8 +35,7 @@ def main():
     init_logger(args.debug)
 
     config_path = args.config
-    config = get_config(config_path, section='MAIN')
-    all_config = get_config(config_path)
+    config = get_config(config_path)
 
     sleep_interval = int(config['sleep_interval'])
     destination = config['destination']
@@ -47,14 +47,6 @@ def main():
 
     # SB8200 requires authentication on Comcast now
     credential = None
-    if config['modem_auth_required']:
-        # We're doing this in a loop because sometimes the modem refuses to authenticate, we'll keep retrying until it works
-        credential = None
-        while not credential:
-            credential = get_credential(config)
-            if not credential:
-                logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
-                time.sleep(sleep_interval)
 
     first = True
     while True:
@@ -64,18 +56,31 @@ def main():
             time.sleep(sleep_interval)
         first = False
 
+        if config['modem_auth_required']:
+            while not credential:
+                credential = get_credential(config)
+                if not credential and config['exit_on_auth_error']:
+                    error_exit('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True', config)
+                if not credential:
+                    logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
+                    time.sleep(sleep_interval)
+
         # Get the HTML from the modem
         html = get_html(config, credential)
         if not html:
+            if config['exit_on_html_error']:
+                error_exit('No HTML obtained from modem.  Exiting since exit_on_html_error is True', config)
             logging.error('No HTML to parse, giving up until next interval')
+            if config['clear_auth_token_on_html_error']:
+                logging.info('clear_auth_token_on_html_error is true, clearing credential token')
+                credential = None
             continue
 
         # Parse the HTML to get our stats
         if modem_model == 'sb8200':
             stats = parse_html_sb8200(html)
         else:
-            logging.error('Modem model %s not supported!  Aborting')
-            sys.exit(1)
+            error_exit('Modem model %s not supported!  Aborting', sleep=False)
 
         if not stats or (not stats['upstream'] and not stats['downstream']):
             logging.error(
@@ -84,36 +89,86 @@ def main():
 
         # Where should 6we send the results?
         if destination == 'influxdb':
-            send_to_influx(stats, all_config)
+            send_to_influx(stats, config)
         else:
-            logging.error('Destination %s not supported!  Aborting.')
-            sys.exit(1)
+            error_exit('Destination %s not supported!  Aborting.' % destination, sleep=False)
 
 
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config.ini', required=False, default='script/config.ini')
+    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=True)
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
 
 
-def get_config(config_path, section=None):
-    """ Use the config parser to get the config.ini options """
+def get_config(config_path=None):
+    """ Grab config from the ini config file,
+        then grab the same variables from ENV to override
+    """
 
-    parser = configparser.ConfigParser()
-    parser.read(config_path)
+    default_config = {
 
-    if section:
-        config = dict(parser[section])
-    else:
-        config = parser
+        # Main
+        'destination': 'influxdb',
+        'sleep_interval': 300,
+        'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
+        'modem_verify_ssl': False,
+        'modem_auth_required': False,
+        'modem_username': 'admin',
+        'modem_password': None,
+        'modem_model': 'sb8200',
+        'exit_on_auth_error': True,
+        'exit_on_html_error': True,
+        'clear_auth_token_on_html_error': True,
+        'sleep_before_exit': True,
 
-    # We need to manipulate some options
-    if section == 'MAIN':
-        config['modem_verify_ssl'] = parser['MAIN'].getboolean('modem_verify_ssl')
-        config['modem_auth_required'] = parser['MAIN'].getboolean('modem_auth_required')
+        # Influx
+        'influx_host': 'localhost',
+        'influx_port': 8086,
+        'influx_database': 'cable_modem_stats',
+        'influx_username': None,
+        'influx_password': None,
+        'influx_use_ssl': False,
+        'influx_verify_ssl': True,
+    }
+
+    config = default_config.copy()
+
+    # Get config from config.ini first
+    if config_path:
+
+        # Some hacky action to get the config without using section headings in the file
+        # https://stackoverflow.com/a/10746467/866057
+        parser = configparser.RawConfigParser()
+        section = 'MAIN'
+        with open(config_path) as f:
+            file_content = '[%s]\n' % section + f.read()
+        parser.read_string(file_content)
+
+        for param in default_config:
+            config[param] = parser[section].get(param, default_config[param])
+
+    # Get it from ENV now and override anything we find
+    for param in config:
+        if os.environ.get(param):
+            config[param] = os.environ.get(param)
+
+    # Special handling depending ontype
+    for param in config:
+
+        # If the default value is a boolean, but we have a string, convert it
+        if isinstance(default_config[param], bool) and isinstance(config[param], str):
+            config[param] = str_to_bool(string=config[param], name=param)
+
+        # If the default value is an int, but we have a string, convert it
+        if isinstance(default_config[param], int) and isinstance(config[param], str):
+            config[param] = int(config[param])
+
+        # Finally any 'None' string should just be None
+        if default_config[param] is None and config[param] == 'None':
+            config[param] = None
 
     return config
 
@@ -157,8 +212,7 @@ def get_credential(config):
         return None
 
     if 'Password:' in credential:
-        logging.error(
-            'Authentication error, received login page.  Check username / password.')
+        logging.error('Authentication error, received login page.  Check username / password.  SB8200 has some kind of bug that can cause this after too many authentications, the only known fix is to reboot the modem.')
         return None
 
     return credential
@@ -193,7 +247,7 @@ def get_html(config, credential):
         return None
 
     if 'Password:' in status_html:
-        logging.error('Authentication error, received login page.  Check username / password.')
+        logging.error('Authentication error, received login page.  Check username / password.  SB8200 has some kind of bug that can cause this after too many authentications, the only known fix is to reboot the modem.')
         if not config['modem_auth_required']:
             logging.warning('You have modem_auth_required to False, but a login page was detected!')
         return None
@@ -276,19 +330,19 @@ def parse_html_sb8200(html):
 
 def send_to_influx(stats, config):
     """ Send the stats to InfluxDB """
-    logging.info('Sending stats to InfluxDB (%s:%s)', config['INFLUXDB']['host'], config['INFLUXDB']['port'])
+    logging.info('Sending stats to InfluxDB (%s:%s)', config['influx_host'], config['influx_port'])
 
     from influxdb import InfluxDBClient
     from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 
     influx_client = InfluxDBClient(
-        config['INFLUXDB']['host'],
-        config['INFLUXDB']['port'],
-        config['INFLUXDB']['username'],
-        config['INFLUXDB']['password'],
-        config['INFLUXDB']['database'],
-        config['INFLUXDB'].getboolean('use_ssl', fallback=False),
-        config['INFLUXDB'].getboolean('verify_ssl', fallback=True)
+        config['influx_host'],
+        config['influx_port'],
+        config['influx_username'],
+        config['influx_password'],
+        config['influx_database'],
+        config['influx_use_ssl'],
+        config['influx_verify_ssl'],
     )
 
     series = []
@@ -326,13 +380,13 @@ def send_to_influx(stats, config):
 
     try:
         influx_client.write_points(series)
-    except (InfluxDBClientError, ConnectionError, InfluxDBServerError) as exception:
+    except (InfluxDBClientError, ConnectionError, InfluxDBServerError, ConnectionRefusedError) as exception:
 
         # If DB doesn't exist, try to create it
         if hasattr(exception, 'code') and exception.code == 404:
             logging.warning('Database %s Does Not Exist.  Attempting to create database',
-                            config['INFLUXDB']['database'])
-            influx_client.create_database(config['INFLUXDB']['database'])
+                            config['influx_database'])
+            influx_client.create_database(config['influx_database'])
             influx_client.write_points(series)
         else:
             logging.error(exception)
@@ -342,6 +396,15 @@ def send_to_influx(stats, config):
     logging.info('Successfully wrote data to InfluxDB')
     logging.debug('Influx series sent to db:')
     logging.debug(series)
+
+
+def error_exit(message, config=None, sleep=True):
+    """ Log error, sleep if needed, then exit 1 """
+    logging.error(message)
+    if sleep and config and config['sleep_before_exit']:
+        logging.info('Sleeping for %s seconds before exiting since sleep_before_exit is True', config['sleep_interval'])
+        time.sleep(config['sleep_interval'])
+    sys.exit(1)
 
 
 def write_html(html):
@@ -355,6 +418,16 @@ def read_html():
     with open("/tmp/html", "rb") as text_file:
         html = text_file.read()
     return html
+
+
+def str_to_bool(string, name):
+    """ Return True is string ~= 'true' """
+    if string.lower() == 'true':
+        return True
+    if string.lower() == 'false':
+        return False
+
+    raise ValueError('Config parameter % s should be boolean "true" or "false", but value is neither of those.' % name)
 
 
 def init_logger(debug=False):
