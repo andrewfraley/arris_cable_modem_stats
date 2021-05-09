@@ -26,6 +26,7 @@ Note that the same parameters from config.ini can be set as ENV variables, ENV o
 ## Config Settings
 Config settings can be provided by the config.ini file, or set as ENV variables.  ENV variables override config.ini.
 
+- arris_stats_debug = False
 - destination = influxdb
 - sleep_interval = 300
 - modem_url = https://192.168.100.1/cmconnectionstatus.html
