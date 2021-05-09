@@ -48,6 +48,7 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 
 
 ### Debugging
+
 You can enable debug logs in three ways:
 
 1. Use --debug when running from cli
