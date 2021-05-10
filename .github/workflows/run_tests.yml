@@ -1,7 +1,7 @@
 name: Run tests
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -12,7 +12,7 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          tests/setup_test_env.sh
+          bash tests/setup_test_env.sh
       - name: Run tests
         run: |
-          tests/run_tests.sh
+          bash tests/run_tests.sh
