@@ -1,0 +1,18 @@
+name: Run tests
+on: [push]
+jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          tests/setup_test_env.sh
+      - name: Run tests
+        run: |
+          tests/run_tests.sh
