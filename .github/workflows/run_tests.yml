@@ -1,7 +1,7 @@
 name: Run tests
 on: [push]
 jobs:
-  test:
+  RunTests:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -12,7 +12,8 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          bash tests/setup_test_env.sh
+          python -m pip install --upgrade pip
+          python3 -m pip install -r src/requirements.txt
       - name: Run tests
         run: |
           bash tests/run_tests.sh
