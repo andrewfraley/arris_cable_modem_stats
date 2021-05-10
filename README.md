@@ -1,3 +1,4 @@
+
 # arris_cable_modem_stats
 
 This is a Python script to scrape stats from the Arris cable modem web interface.  Results are meant to be sent to InfluxDB for use with Grafana, but other targets could be added.  This currently only works with the Arris SB8200.  Credit goes to https://github.com/billimek/SB6183-stats-for-influxdb
