@@ -92,6 +92,7 @@ class TestArrisStats(unittest.TestCase):
                 self.assertIsInstance(config[param], bool)
                 self.assertEqual(config[param], not default_config[param])
 
+
     def test_dockerfile(self):
         """ Ensure the docker file has the same hard coded ENV defaults """
         default_config = self.default_config.copy()
