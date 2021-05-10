@@ -1,0 +1,19 @@
+name: Run tests
+on: [push]
+jobs:
+  RunTests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python3 -m pip install -r src/requirements.txt
+      - name: Run tests
+        run: |
+          bash tests/run_tests.sh
