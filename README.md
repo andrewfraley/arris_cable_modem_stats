@@ -10,10 +10,23 @@ There is some kind of bug (at least with Comcast's firmware) where the modem can
 
 ## Run Locally
 
-- Install [pipenv](https://github.com/pypa/pipenv). On a Mac with Homebrew, ```brew install pipenv```
-- Install pip dependencies (run from the script directory of this repo): ```pipenv install```
+- Install Python 3.8.x or later
+- Clone repo and
+    - ```$ cd arris_cable_modem_stats/src```
+
+- Install virtualenv
+    - ```$ python3 -m pip install virtualenv```
+- Create and activate virtualenv
+    - ```$ python3 -m venv venv```
+    - ```$ source venv/bin/activate```
+- Install pip dependencies
+    - ```python3 -m pip install -r requirements.txt```
 - Edit config.ini and change influx_host to your influxdb server
-- ```pipenv run python3 arris_stats.py --config config.ini```
+- If your cable modem requires authentication, edit config.ini and set:
+    - ```modem_auth_required = True```
+    - ```modem_password = last_8_chars_of_modem_serial```
+- Run arris_stats.py
+    - ```python3 arris_stats.py --config config.ini```
 
 ## Docker
 Run in a Docker container with:
