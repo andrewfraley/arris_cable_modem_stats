@@ -98,12 +98,32 @@ class TestArrisStats(unittest.TestCase):
         path = 'Dockerfile'
         with open(path, "r") as dockerfile:
             dockerfile_contents = dockerfile.read().splitlines()
+
+        # We need to search each line until we find the ENV line, then find the end of the list of ENV variables
+        env_lines = []
+        first = None
         for line in dockerfile_contents:
-            if re.match(r'^ENV \S+ \S+$', line):
-                param = line.split(' ')[1]
-                value = line.split(' ')[2]
-                self.assertEqual(str(default_config[param]), value)  # Param is in Dockerfile but not default_config, or default values do not match
-                del default_config[param]  # Delete it once found so we can identify missing params
+
+            # Find the first line
+            if not first and re.match(r'^ENV \S+ \S+$', line):
+                # ENV arris_stats_debug=False \
+                first = line.split('ENV ')[1].split(' \\')[0].strip()
+                env_lines.append(first)
+            # Find the rest of the lines
+            elif first:
+                if re.match(r'\s*\S.+=\S.', line):
+                    env_lines.append(line.split(' \\')[0].strip())
+                # If the line isn't just whitespace or a comment, consider this the end of the ENV block
+                elif line.strip() == '' or re.match(r'^#', line.strip()):
+                    continue
+                else:
+                    break
+        # Now we have all the lines, test the values
+        for line in env_lines:
+            param = line.split('=')[0]
+            value = line.split('=')[1]
+            self.assertEqual(str(default_config[param]), value)  # Param is in Dockerfile but not default_config, or default values do not match
+            del default_config[param]  # Delete it once found so we can identify missing params
 
         empty_dict = {}
         self.assertEqual(default_config, empty_dict)  # default_config should be empty, if not then the Dockerfile is missing params
