@@ -103,7 +103,7 @@ def main():
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=False)
+    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=True)
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
@@ -120,12 +120,12 @@ def get_config(config_path=None):
         'arris_stats_debug': False,
         'destination': 'influxdb',
         'sleep_interval': 300,
-        'modem_url': 'http://192.168.100.1/RgConnect.asp',
+        'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
         'modem_verify_ssl': False,
         'modem_auth_required': False,
         'modem_username': 'admin',
         'modem_password': None,
-        'modem_model': 'sb6183',
+        'modem_model': 'sb8200',
         'exit_on_auth_error': True,
         'exit_on_html_error': True,
         'clear_auth_token_on_html_error': True,
