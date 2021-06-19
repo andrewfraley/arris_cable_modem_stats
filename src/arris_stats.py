@@ -106,6 +106,8 @@ def main():
         # Where should 6we send the results?
         if destination == 'influxdb':
             send_to_influx(stats, config)
+        elif destination == 'timestream':
+            send_to_aws_time_stream(stats, config)
         else:
             error_exit('Destination %s not supported!  Aborting.' % destination, sleep=False)
 
@@ -129,7 +131,7 @@ def get_config(config_path=None):
         # Main
         'arris_stats_debug': False,
         'destination': 'influxdb',
-        'sleep_interval': 300,
+        'sleep_interval': 10,
         'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
         'modem_verify_ssl': False,
         'modem_auth_required': False,
@@ -149,6 +151,12 @@ def get_config(config_path=None):
         'influx_password': None,
         'influx_use_ssl': False,
         'influx_verify_ssl': True,
+
+        # AWS Timestream
+        'timestream_aws_access_key_id': None,
+        'timestream_aws_secret_access_key': None,
+        'timestream_database': None,
+        'timestream_table': 'cable_modem_stats'
     }
 
     config = default_config.copy()
@@ -281,6 +289,188 @@ def get_html(config, credential):
     return status_html
 
 
+def parse_html_sb8200(html):
+    """ Parse the HTML into the modem stats dict """
+    logging.info('Parsing HTML for modem model sb8200')
+
+    # As of Aug 2019 the SB8200 has a bug in its HTML
+    # The tables have an extra </tr> in the table headers, we have to remove it so
+    # that Beautiful Soup can parse it
+    # Before: <tr><th colspan=7><strong>Upstream Bonded Channels</strong></th></tr>
+    # After: <tr><th colspan=7><strong>Upstream Bonded Channels</strong></th>
+    html = html.replace('Bonded Channels</strong></th></tr>', 'Bonded Channels</strong></th>', 2)
+
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, 'html.parser')
+    stats = {
+        'downstream': [],
+        'upstream': []
+    }
+
+    # downstream table
+    channel_id = None
+    for table_row in soup.find_all("table")[1].find_all("tr"):
+        if table_row.th:
+            continue
+
+        channel_id = table_row.find_all('td')[0].text.strip()
+
+        # Some firmwares have a header row not already skipped by "if table_row.th",
+        # skip it if channel_id isn't an integer
+        if not channel_id.isdigit():
+            continue
+
+        channel_id_int = int(channel_id)
+        frequency = int(table_row.find_all('td')[3].text.replace(" Hz", "").strip())
+        power = float(table_row.find_all('td')[4].text.replace(" dBmV", "").strip())
+        snr = float(table_row.find_all('td')[5].text.replace(" dB", "").strip())
+        corrected = int(table_row.find_all('td')[6].text.strip())
+        uncorrectables = int(table_row.find_all('td')[7].text.strip())
+
+        stats['downstream'].append({
+            'channel_id': channel_id_int,
+            'frequency': frequency,
+            'power': power,
+            'snr': snr,
+            'corrected': corrected,
+            'uncorrectables': uncorrectables
+        })
+
+    logging.debug('downstream stats: %s', stats['downstream'])
+    if len(stats['downstream']) == 0:
+        logging.error('Failed to get any downstream stats! Probably a parsing issue in parse_html_sb8200()')
+
+    # upstream table
+    stats['upstream'] = []
+    for table_row in soup.find_all("table")[2].find_all("tr"):
+        if table_row.th:
+            continue
+
+        # Some firmwares have a header row not already skipped by "if table_row.th",
+        # skip it if channel_id isn't an integer
+        if not channel_id.isdigit():
+            continue
+
+        channel_id = int(table_row.find_all('td')[1].text.strip())
+        frequency = int(table_row.find_all('td')[4].text.replace(" Hz", "").strip())
+        power = float(table_row.find_all('td')[6].text.replace(" dBmV", "").strip())
+
+        stats['upstream'].append({
+            'channel_id': channel_id,
+            'frequency': frequency,
+            'power': power,
+        })
+
+    logging.debug('upstream stats: %s', stats['upstream'])
+    if len(stats['upstream']) == 0:
+        logging.error('Failed to get any upstream stats! Probably a parsing issue in parse_html_sb8200()')
+
+    return stats
+
+
+def parse_html_sb6183(html):
+    """ Parse the HTML into the modem stats dict """
+    logging.info('Parsing HTML for modem model sb6183')
+
+    # Page to parse: http://192.168.100.1/RgConnect.asp
+
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, 'html.parser')
+    stats = {
+        'downstream': [],
+        'upstream': []
+    }
+
+    # downstream table
+    logging.debug("Found %s tables" % len(soup.find_all("table")))
+    for table_row in soup.find_all("table")[2].find_all("tr"):
+        if table_row.th:
+            continue
+
+        '''
+        <tr>
+    <td ><strong>Channel</strong></td>
+    <td ><strong>Lock Status</strong></td>
+    <td ><strong>Modulation</strong></td>
+    <td ><strong>Channel ID</strong></td>
+    <td ><strong>Frequency</strong></td>
+    <td ><strong>Power</strong></td>
+    <td ><strong>SNR</strong></td>
+    <td ><strong>Corrected</strong></td>
+    <td ><strong>Uncorrectables</strong></td>
+   </tr>
+        '''
+
+        # TODO understand what the difference is in channel_id vs channel
+
+        channel = table_row.find_all('td')[0].text.strip()
+        logging.debug("Processing downstream channel %s" % channel)
+        # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
+        if not channel.isdigit():
+            continue
+
+        channel_id = int(table_row.find_all('td')[3].text.strip())
+        frequency = int(table_row.find_all('td')[4].text.replace(" Hz", "").strip())
+        power = float(table_row.find_all('td')[5].text.replace(" dBmV", "").strip())
+        snr = float(table_row.find_all('td')[6].text.replace(" dB", "").strip())
+        corrected = int(table_row.find_all('td')[7].text.strip())
+        uncorrectables = int(table_row.find_all('td')[8].text.strip())
+
+        stats['downstream'].append({
+            'channel': channel,
+            'channel_id': channel_id,
+            'frequency': frequency,
+            'power': power,
+            'snr': snr,
+            'corrected': corrected,
+            'uncorrectables': uncorrectables
+        })
+
+    logging.debug('downstream stats: %s', stats['downstream'])
+    if len(stats['downstream']) == 0:
+        logging.error('Failed to get any downstream stats! Probably a parsing issue in parse_html_sb8200()')
+
+    # upstream table
+    for table_row in soup.find_all("table")[3].find_all("tr"):
+        if table_row.th:
+            continue
+
+        '''
+        <tr>
+            <td><strong>Channel</strong></td>
+            <td><strong>Lock Status</strong></td>
+                        <td><strong>US Channel Type</strong></td>
+                        <td><strong>Channel ID</strong></td>
+                        <td><strong>Symbol Rate</strong></td>
+                        <td><strong>Frequency</strong></td>
+                        <td><strong>Power</strong></td>
+           </tr>
+        '''
+
+        # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
+        channel = table_row.find_all('td')[0].text.strip()
+        if not channel.isdigit():
+            continue
+
+        channel_id = int(table_row.find_all('td')[3].text.strip())
+        symbol_rate = int(table_row.find_all('td')[4].text.replace(" Ksym/sec", "").strip())
+        frequency = int(table_row.find_all('td')[5].text.replace(" Hz", "").strip())
+        power = float(table_row.find_all('td')[6].text.replace(" dBmV", "").strip())
+
+        stats['upstream'].append({
+            'channel_id': channel_id,
+            'symbol_rate': symbol_rate,
+            'frequency': frequency,
+            'power': power,
+        })
+
+    logging.debug('upstream stats: %s', stats['upstream'])
+    if len(stats['upstream']) == 0:
+        logging.error('Failed to get any upstream stats! Probably a parsing issue in parse_html_sb8200()')
+
+    return stats
+
+
 def send_to_influx(stats, config):
     """ Send the stats to InfluxDB """
     logging.info('Sending stats to InfluxDB (%s:%s)', config['influx_host'], config['influx_port'])
@@ -349,6 +539,99 @@ def send_to_influx(stats, config):
     logging.info('Successfully wrote data to InfluxDB')
     logging.debug('Influx series sent to db:')
     logging.debug(series)
+
+
+def send_to_aws_time_stream(stats, config):
+    """ Send the stats to AWS Timestream """
+    logging.info('Sending stats to Timestream (database=%s)', config['timestream_database'])
+
+    import boto3
+
+    ts_client = boto3.client(
+        'timestream-write',
+        aws_access_key_id=config['timestream_aws_access_key_id'],
+        aws_secret_access_key=config['timestream_aws_secret_access_key']
+    )
+
+    database = ts_client.describe_database(
+        DatabaseName=config['timestream_database']
+    )
+    logging.debug("Database details = %s" % database)
+
+    table = ts_client.describe_table(
+        DatabaseName=config['timestream_database'],
+        TableName=config['timestream_table']
+    )
+    logging.debug("Table details = %s" % table)
+
+    # TODO Check validity of table / database, error otherwise
+
+    current_time = time.time_ns()
+    logging.debug("Converting to timestream - %s" % stats)
+
+    downstream_common_attributes = {
+            'Dimensions': [{'Name': 'measurement', 'Value': 'downstream_statistics'}],
+            'Time': str(current_time),
+            'TimeUnit': 'NANOSECONDS'
+        }
+    downstream_records = []
+    for stats_down in stats['downstream']:
+        for key in stats_down:
+            if key == 'channel_id':
+                continue
+
+            downstream_records.append({
+                'Dimensions': [
+                    {'Name': 'channel_id', 'Value': str(stats_down['channel_id'])}
+                ],
+                'MeasureName': key,
+                'MeasureValue': str(stats_down[key]),
+                'MeasureValueType': 'DOUBLE' if isinstance(stats_down[key], float) else 'BIGINT'
+            })
+
+    try:
+        logging.debug("Writing common attributes: %s" % downstream_common_attributes)
+        logging.debug("Writing records: %s" % downstream_records)
+        result = ts_client.write_records(DatabaseName=config['timestream_database'],
+                                         TableName=config['timestream_table'], Records=downstream_records,
+                                         CommonAttributes=downstream_common_attributes)
+        logging.info("Timestream response = %s" % result)
+        logging.info("Wrote %s records to TimeStream" % len(downstream_records))
+    except (ts_client.exceptions.RejectedRecordsException, Exception) as err:
+        logging.error(err)
+
+    upstream_common_attributes = {
+        'Dimensions': [{'Name': 'measurement', 'Value': 'downstream_statistics'}],
+        'Time': str(current_time),
+        'TimeUnit': 'NANOSECONDS'
+    }
+    upstream_records = []
+    for stats_up in stats['upstream']:
+        for key in stats_up:
+            if key == 'channel_id':
+                continue
+
+            upstream_records.append({
+                'Dimensions': [
+                    {'Name': 'channel_id', 'Value': str(stats_up['channel_id'])}
+                ],
+                'MeasureName': key,
+                'MeasureValue': str(stats_up[key]),
+                'MeasureValueType': 'DOUBLE' if isinstance(stats_up[key], float) else 'BIGINT'
+            })
+
+    try:
+        logging.debug("Writing common attributes: %s" % upstream_common_attributes)
+        logging.debug("Writing records: %s" % upstream_records)
+        result = ts_client.write_records(DatabaseName=config['timestream_database'],
+                                         TableName=config['timestream_table'], Records=upstream_records,
+                                         CommonAttributes=upstream_common_attributes)
+        logging.info("Timestream response = %s" % result)
+        logging.info("Wrote %s records to TimeStream" % len(upstream_records))
+    except (ts_client.exceptions.RejectedRecordsException, Exception) as err:
+        logging.error(err)
+
+    logging.info('Successfully wrote data to Timestream')
 
 
 def error_exit(message, config=None, sleep=True):
