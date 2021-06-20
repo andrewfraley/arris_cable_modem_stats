@@ -492,34 +492,34 @@ def send_to_influx(stats, config):
     current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     for stats_down in stats['downstream']:
-
-        series.append({
+        record = {
             'measurement': 'downstream_statistics',
             'time': current_time,
-            'fields': {
-                'frequency': int(stats_down['frequency']),
-                'power': float(stats_down['power']),
-                'snr': float(stats_down['snr']),
-                'corrected': int(stats_down['corrected']),
-                'uncorrectables': int(stats_down['uncorrectables'])
-            },
+            'fields': {},
             'tags': {
                 'channel_id': int(stats_down['channel_id'])
             }
-        })
+        }
+        for field in stats_down:
+            if field == 'channel_id':
+                continue
+            record['fields'][field] = stats_down[field]
+        series.append(record)
 
     for stats_up in stats['upstream']:
-        series.append({
+        record = {
             'measurement': 'upstream_statistics',
             'time': current_time,
-            'fields': {
-                'frequency': int(stats_up['frequency']),
-                'power': float(stats_up['power']),
-            },
+            'fields': {},
             'tags': {
                 'channel_id': int(stats_up['channel_id'])
             }
-        })
+        }
+        for field in stats_up:
+            if field == 'channel_id':
+                continue
+            record['fields'][field] = stats_up[field]
+        series.append(record)
 
     try:
         influx_client.write_points(series)
@@ -553,18 +553,22 @@ def send_to_aws_time_stream(stats, config):
         aws_secret_access_key=config['timestream_aws_secret_access_key']
     )
 
-    database = ts_client.describe_database(
-        DatabaseName=config['timestream_database']
-    )
-    logging.debug("Database details = %s" % database)
+    try:
+        # Attempt to validate connection to database and table
+        # Error out and return if not able to access / connection isn't valid
+        database = ts_client.describe_database(
+            DatabaseName=config['timestream_database']
+        )
+        logging.debug("Database details = %s" % database)
 
-    table = ts_client.describe_table(
-        DatabaseName=config['timestream_database'],
-        TableName=config['timestream_table']
-    )
-    logging.debug("Table details = %s" % table)
-
-    # TODO Check validity of table / database, error otherwise
+        table = ts_client.describe_table(
+            DatabaseName=config['timestream_database'],
+            TableName=config['timestream_table']
+        )
+        logging.debug("Table details = %s" % table)
+    except Exception as err:
+        logging.error(err)
+        return
 
     current_time = time.time_ns()
     logging.debug("Converting to timestream - %s" % stats)
@@ -630,6 +634,7 @@ def send_to_aws_time_stream(stats, config):
         logging.info("Wrote %s records to TimeStream" % len(upstream_records))
     except (ts_client.exceptions.RejectedRecordsException, Exception) as err:
         logging.error(err)
+        return
 
     logging.info('Successfully wrote data to Timestream')
 
