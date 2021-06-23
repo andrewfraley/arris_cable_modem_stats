@@ -152,7 +152,8 @@ def get_default_config():
         'timestream_aws_access_key_id': None,
         'timestream_aws_secret_access_key': None,
         'timestream_database': 'cable_modem_stats',
-        'timestream_table': 'cable_modem_stats'
+        'timestream_table': 'cable_modem_stats',
+        'timestream_aws_region': 'us-east-1'
     }
 
 
@@ -546,11 +547,17 @@ def send_to_aws_time_stream(stats, config):
     logging.info('Sending stats to Timestream (database=%s)', config['timestream_database'])
 
     import boto3
+    from botocore.config import Config
+
+    region_config = Config(
+        region_name=config['timestream_aws_region']
+    )
 
     ts_client = boto3.client(
         'timestream-write',
         aws_access_key_id=config['timestream_aws_access_key_id'],
-        aws_secret_access_key=config['timestream_aws_secret_access_key']
+        aws_secret_access_key=config['timestream_aws_secret_access_key'],
+        config=region_config
     )
 
     try:

@@ -73,6 +73,7 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - timestream_aws_secret_access_key = None
 - timestream_database = cable_modem_stats
 - timestream_table = cable_modem_stats
+- timestream_aws_region = us-east-1
 
 
 ### Debugging
