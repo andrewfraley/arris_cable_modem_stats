@@ -611,7 +611,7 @@ def send_to_aws_time_stream(stats, config):
         logging.error(err)
 
     upstream_common_attributes = {
-        'Dimensions': [{'Name': 'measurement', 'Value': 'downstream_statistics'}],
+        'Dimensions': [{'Name': 'measurement', 'Value': 'upstream_statistics'}],
         'Time': str(current_time),
         'TimeUnit': 'NANOSECONDS'
     }
