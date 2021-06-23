@@ -121,17 +121,13 @@ def get_args():
     return args
 
 
-def get_config(config_path=None):
-    """ Grab config from the ini config file,
-        then grab the same variables from ENV to override
-    """
-
-    default_config = {
+def get_default_config():
+    return {
 
         # Main
         'arris_stats_debug': False,
         'destination': 'influxdb',
-        'sleep_interval': 10,
+        'sleep_interval': 300,
         'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
         'modem_verify_ssl': False,
         'modem_auth_required': False,
@@ -155,10 +151,17 @@ def get_config(config_path=None):
         # AWS Timestream
         'timestream_aws_access_key_id': None,
         'timestream_aws_secret_access_key': None,
-        'timestream_database': None,
+        'timestream_database': 'cable_modem_stats',
         'timestream_table': 'cable_modem_stats'
     }
 
+
+def get_config(config_path=None):
+    """ Grab config from the ini config file,
+        then grab the same variables from ENV to override
+    """
+
+    default_config = get_default_config()
     config = default_config.copy()
 
     # Get config from config.ini first

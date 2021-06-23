@@ -42,7 +42,9 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - arris_stats_debug = False
     - enables debug logs
 - destination = influxdb
-    - influxdb is the only valid option at this time
+    - Valid options include:
+      - influxdb - requires all influx_* params to be populated
+      - timestream - requires all timestream_* params to be populated
 - sleep_interval = 300
 - modem_url = https://192.168.100.1/cmconnectionstatus.html
 - modem_verify_ssl = False
@@ -67,6 +69,10 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - influx_password = None
 - influx_use_ssl = False
 - influx_verify_ssl = True
+- timestream_aws_access_key_id = None
+- timestream_aws_secret_access_key = None
+- timestream_database = cable_modem_stats
+- timestream_table = cable_modem_stats
 
 
 ### Debugging
