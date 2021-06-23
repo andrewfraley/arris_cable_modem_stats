@@ -405,8 +405,6 @@ def parse_html_sb6183(html):
    </tr>
         '''
 
-        # TODO understand what the difference is in channel_id vs channel
-
         channel_id = table_row.find_all('td')[0].text.strip()
         logging.debug("Processing downstream channel %s" % channel_id)
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
@@ -593,7 +591,8 @@ def send_to_aws_time_stream(stats, config):
 
             downstream_records.append({
                 'Dimensions': [
-                    {'Name': 'channel_id', 'Value': str(stats_down['channel_id'])}
+                    {'Name': 'channel_id', 'Value': str(stats_down['channel_id'])},
+                    {'Name': 'group', 'Value': 'downstream_statistics'}
                 ],
                 'MeasureName': key,
                 'MeasureValue': str(stats_down[key]),
@@ -624,7 +623,8 @@ def send_to_aws_time_stream(stats, config):
 
             upstream_records.append({
                 'Dimensions': [
-                    {'Name': 'channel_id', 'Value': str(stats_up['channel_id'])}
+                    {'Name': 'channel_id', 'Value': str(stats_up['channel_id'])},
+                    {'Name': 'group', 'Value': 'upstream_statistics'}
                 ],
                 'MeasureName': key,
                 'MeasureValue': str(stats_up[key]),
