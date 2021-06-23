@@ -403,13 +403,12 @@ def parse_html_sb6183(html):
 
         # TODO understand what the difference is in channel_id vs channel
 
-        channel = table_row.find_all('td')[0].text.strip()
-        logging.debug("Processing downstream channel %s" % channel)
+        channel_id = table_row.find_all('td')[0].text.strip()
+        logging.debug("Processing downstream channel %s" % channel_id)
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
-        if not channel.isdigit():
+        if not channel_id.isdigit():
             continue
 
-        channel_id = int(table_row.find_all('td')[3].text.strip())
         frequency = int(table_row.find_all('td')[4].text.replace(" Hz", "").strip())
         power = float(table_row.find_all('td')[5].text.replace(" dBmV", "").strip())
         snr = float(table_row.find_all('td')[6].text.replace(" dB", "").strip())
@@ -417,7 +416,6 @@ def parse_html_sb6183(html):
         uncorrectables = int(table_row.find_all('td')[8].text.strip())
 
         stats['downstream'].append({
-            'channel': channel,
             'channel_id': channel_id,
             'frequency': frequency,
             'power': power,
@@ -448,11 +446,10 @@ def parse_html_sb6183(html):
         '''
 
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
-        channel = table_row.find_all('td')[0].text.strip()
-        if not channel.isdigit():
+        channel_id = table_row.find_all('td')[0].text.strip()
+        if not channel_id.isdigit():
             continue
 
-        channel_id = int(table_row.find_all('td')[3].text.strip())
         symbol_rate = int(table_row.find_all('td')[4].text.replace(" Ksym/sec", "").strip())
         frequency = int(table_row.find_all('td')[5].text.replace(" Hz", "").strip())
         power = float(table_row.find_all('td')[6].text.replace(" dBmV", "").strip())
