@@ -1,8 +1,11 @@
 import os
 import re
+import json
 import unittest
 import tempfile
 import src.arris_stats as arris_stats
+
+# pylint: disable=line-too-long
 
 
 class TestArrisStats(unittest.TestCase):
@@ -143,6 +146,32 @@ class TestArrisStats(unittest.TestCase):
 
         empty_dict = {}
         self.assertEqual(default_config, empty_dict)  # default_config should be empty, if not then the Dockerfile is missing params
+
+    def test_parse_sb8200(self):
+        """ Test parse_html_sb8200 """
+
+        # Get the control values
+        with open('tests/mockups/sb8200.json') as f:
+            control_values_string = f.read()
+            control_values = json.loads(control_values_string)
+
+        # Get the html
+        with open('tests/mockups/sb8200.html') as f:
+            html = f.read()
+        stats = arris_stats.parse_html_sb8200(html)
+
+        # Verify the correct types and root level indexes
+        self.assertIsInstance(stats, dict)
+        self.assertIn('downstream', stats)
+        self.assertIn('upstream', stats)
+
+        # Verify the values
+        root_indexes = ['downstream', 'upstream']
+        for root_index in root_indexes:
+            row_index = 0
+            for row in stats[root_index]:
+                self.assertEqual(row, stats[root_index][row_index])
+                row_index += 1
 
 
 if __name__ == '__main__':
