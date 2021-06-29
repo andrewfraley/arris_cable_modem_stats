@@ -1,6 +1,6 @@
 # arris_cable_modem_stats
 
-This is a Python script to scrape stats from the Arris cable modem web interface.  Results are meant to be sent to InfluxDB for use with Grafana, but other targets could be added.  This currently only works with the Arris SB8200.  Credit goes to https://github.com/billimek/SB6183-stats-for-influxdb
+This is a Python script to scrape stats from the Arris cable modem web interface.  Results are meant to be sent to InfluxDB for use with Grafana, but other targets could be added.  This currently only works with the Arris SB8200 and SB6183.  Credit goes to https://github.com/billimek/SB6183-stats-for-influxdb
 
 
 ## Authentication
@@ -50,7 +50,7 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - modem_username = admin
 - modem_password = None
 - modem_model = sb8200
-    - only sb8200 is supported at this time
+    - only sb8200 and sb6163 are supported at this time
 - exit_on_auth_error = True
     - Any auth error will cause an exit, useful when running in a Docker container to get a new session
 - exit_on_html_error = True
