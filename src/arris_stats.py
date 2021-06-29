@@ -17,6 +17,21 @@ from datetime import datetime
 import urllib3
 import requests
 
+
+# To add a new modem, add the model below
+# Create a new file src/arris_stats_themodel.py and a parse_html_themodel.py function
+# Use a debugger and set a break point just after the html = get_html(config, credential) line
+# Set another break point just after the  stats = parse_html_function(html) line
+# Save the raw html to tests/mockups/themodel.html
+# Save the stats dict as json to tests/mockups/themodel.json
+# The unittests will automatically pickup the new model, function, and mockups.  Ensure the tests pass with:
+# bash tests/run_tests.sh
+modems_supported = [
+    'sb8200',
+    'sb6183'
+]
+
+# The modem is pretty finicky about the headers
 HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.5',
@@ -26,15 +41,6 @@ HEADERS = {
     'Upgrade-Insecure-Requests': '1',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0',
 }
-
-# To add an ew modem, add the model below
-# Create a new file src/arris_stats_themodel.py and a parse_html_themodel.py function
-# The unittests will automatically pickup the new model and function, ensure the tests pass with:
-# bash tests/run_tests.sh
-modems_supported = [
-    'sb8200',
-    'sb6183'
-]
 
 
 def main():
