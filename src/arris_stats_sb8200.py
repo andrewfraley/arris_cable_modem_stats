@@ -50,7 +50,7 @@ def parse_html_sb8200(html):
 
     logging.debug('downstream stats: %s', stats['downstream'])
     if not stats['downstream']:
-        logging.error('Failed to get any downstream stats! Probably a parsing issue in parse_html_sb8200()')
+        logging.error('Failed to get any downstream stats! If you have selected the correct modem, then this could be a parsing issue in %s', __file__)
 
     # upstream table
     stats['upstream'] = []
@@ -74,6 +74,6 @@ def parse_html_sb8200(html):
 
     logging.debug('upstream stats: %s', stats['upstream'])
     if not stats['upstream']:
-        logging.error('Failed to get any upstream stats! Probably a parsing issue in parse_html_sb8200()')
+        logging.error('Failed to get any upstream stats! If you have selected the correct modem, then this could be a parsing issue in %s', __file__)
 
     return stats

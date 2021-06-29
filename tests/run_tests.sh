@@ -1,11 +1,7 @@
 #!/bin/bash
 # run from parent dir
+export PYTHONPATH=./src
+python3 -m unittest discover -v -s tests/ -p test_*.py
 
-FILES=tests/test_*.py
-for f in $FILES
-do
-  echo "Running $f tests"
-  filename=$(basename -- "$f")
-  testfile="${filename%.*}"
-  python3 -m tests.$testfile
-done
+# pylint src/
+# pycodestyle src/

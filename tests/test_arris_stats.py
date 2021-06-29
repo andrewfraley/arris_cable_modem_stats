@@ -147,31 +147,42 @@ class TestArrisStats(unittest.TestCase):
         empty_dict = {}
         self.assertEqual(default_config, empty_dict)  # default_config should be empty, if not then the Dockerfile is missing params
 
-    def test_parse_sb8200(self):
-        """ Test parse_html_sb8200 """
+    def test_modem_parse_functions(self):
+        """ Test all the modem parse functions """
+        modems_supported = arris_stats.modems_supported
 
-        # Get the control values
-        with open('tests/mockups/sb8200.json') as f:
-            control_values_string = f.read()
-            control_values = json.loads(control_values_string)
+        for modem in modems_supported:
+            # Skipping the sb6183 until I can get example html
+            if modem == 'sb6183':
+                continue
 
-        # Get the html
-        with open('tests/mockups/sb8200.html') as f:
-            html = f.read()
-        stats = arris_stats.parse_html_sb8200(html)
+            # Get the control values
+            with open('tests/mockups/%s.json' % modem) as f:
+                control_values_string = f.read()
+                control_values = json.loads(control_values_string)
 
-        # Verify the correct types and root level indexes
-        self.assertIsInstance(stats, dict)
-        self.assertIn('downstream', stats)
-        self.assertIn('upstream', stats)
+            # Get the html
+            with open('tests/mockups/%s.html' % modem) as f:
+                html = f.read()
 
-        # Verify the values
-        root_indexes = ['downstream', 'upstream']
-        for root_index in root_indexes:
-            row_index = 0
-            for row in stats[root_index]:
-                self.assertEqual(row, stats[root_index][row_index])
-                row_index += 1
+            # Get the proper function
+            module = __import__('arris_stats_' + modem)
+            parse_html_function = getattr(module, 'parse_html_' + modem)
+
+            stats = parse_html_function(html)
+
+            # Verify the correct types and root level indexes
+            self.assertIsInstance(stats, dict)
+            self.assertIn('downstream', stats)
+            self.assertIn('upstream', stats)
+
+            # Verify the values
+            root_indexes = ['downstream', 'upstream']
+            for root_index in root_indexes:
+                row_index = 0
+                for row in control_values[root_index]:
+                    self.assertEqual(row, stats[root_index][row_index])
+                    row_index += 1
 
 
 if __name__ == '__main__':
