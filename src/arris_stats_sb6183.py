@@ -1,6 +1,8 @@
 """
     Functions for model SB8200
     https://github.com/andrewfraley/arris_cable_modem_stats
+
+    This function written by https://github.com/mphuff
 """
 # pylint: disable=line-too-long
 # pylint: disable=pointless-string-statement
