@@ -74,7 +74,7 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 You can enable debug logs in three ways:
 
 1. Use --debug when running from cli
-    - ```pipenv run python3 sb8200_stats.py --debug --config config.ini```
+    - ```python3 arris_stats.py --debug --config config.ini```
 2. Set ENV variable ```arris_stats_debug = true```
 3. Set config.ini ```arris_stats_debug = true```
 
