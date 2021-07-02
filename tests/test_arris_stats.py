@@ -127,9 +127,6 @@ class TestArrisStats(unittest.TestCase):
         modems_supported = arris_stats.modems_supported
 
         for modem in modems_supported:
-            # Skipping the sb6183 until I can get example html
-            if modem == 'sb6183':
-                continue
 
             # Get the control values
             with open('tests/mockups/%s.json' % modem) as f:
@@ -154,10 +151,8 @@ class TestArrisStats(unittest.TestCase):
             # Verify the values
             root_indexes = ['downstream', 'upstream']
             for root_index in root_indexes:
-                row_index = 0
                 for row in control_values[root_index]:
-                    self.assertEqual(row, stats[root_index][row_index])
-                    row_index += 1
+                    self.assertIn(row, stats[root_index])
 
 
 if __name__ == '__main__':
