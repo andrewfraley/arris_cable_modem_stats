@@ -47,12 +47,13 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
       - timestream - requires all timestream_* params to be populated
 - sleep_interval = 300
 - modem_url = https://192.168.100.1/cmconnectionstatus.html
+    - url for sb6183 = http://192.168.100.1/RgConnect.asp
 - modem_verify_ssl = False
 - modem_auth_required = False
 - modem_username = admin
 - modem_password = None
 - modem_model = sb8200
-    - only sb8200 and sb6163 are supported at this time
+    - models supported: sb6183, sb8200
 - exit_on_auth_error = True
     - Any auth error will cause an exit, useful when running in a Docker container to get a new session
 - exit_on_html_error = True
@@ -85,11 +86,15 @@ You can enable debug logs in three ways:
 2. Set ENV variable ```arris_stats_debug = true```
 3. Set config.ini ```arris_stats_debug = true```
 
-## InfluxDB
+## Database Options
+
+### InfluxDB
 The database will be created automatically if the user has permissions (config.ini defaults to anonymous access).  You can set the database name in config.ini using the [INFLUXDB] database parameter.
 
-## Grafana
+### AWS Timestream
+Database and table are required to be created ahead of time using appropriate settings for your use-case. You can set the database name in config.ini using the [TIMESTREAM] database parameter.
 
+## Grafana
 There are two Grafana examples.  The first only relies on the Python script from this repo, while the second relies on [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/).
 
 ### SB8200 Dashboard
