@@ -15,12 +15,16 @@ def parse_html_sb6183(html):
     logging.info('Parsing HTML for modem model sb6183')
 
     # Page to parse: http://192.168.100.1/RgConnect.asp
+
+    from bs4 import BeautifulSoup
     soup = BeautifulSoup(html, 'html.parser')
-    stats = {}
+    stats = {
+        'downstream': [],
+        'upstream': []
+    }
 
     # downstream table
-    stats['downstream'] = []
-    logging.debug("Found %s tables", len(soup.find_all("table")))
+    logging.debug("Found %s tables" % len(soup.find_all("table")))
     for table_row in soup.find_all("table")[2].find_all("tr"):
         if table_row.th:
             continue
@@ -39,21 +43,19 @@ def parse_html_sb6183(html):
    </tr>
         '''
 
-        channel = table_row.find_all('td')[0].text.strip()
-        logging.debug("Processing downstream channel %s", channel)
+        channel_id = table_row.find_all('td')[0].text.strip()
+        logging.debug("Processing downstream channel %s" % channel_id)
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
-        if not channel.isdigit():
+        if not channel_id.isdigit():
             continue
 
-        channel_id = table_row.find_all('td')[3].text.strip()
-        frequency = table_row.find_all('td')[4].text.replace(" Hz", "").strip()
-        power = table_row.find_all('td')[5].text.replace(" dBmV", "").strip()
-        snr = table_row.find_all('td')[6].text.replace(" dB", "").strip()
-        corrected = table_row.find_all('td')[7].text.strip()
-        uncorrectables = table_row.find_all('td')[8].text.strip()
+        frequency = int(table_row.find_all('td')[4].text.replace(" Hz", "").strip())
+        power = float(table_row.find_all('td')[5].text.replace(" dBmV", "").strip())
+        snr = float(table_row.find_all('td')[6].text.replace(" dB", "").strip())
+        corrected = int(table_row.find_all('td')[7].text.strip())
+        uncorrectables = int(table_row.find_all('td')[8].text.strip())
 
         stats['downstream'].append({
-            'channel': channel,
             'channel_id': channel_id,
             'frequency': frequency,
             'power': power,
@@ -63,11 +65,10 @@ def parse_html_sb6183(html):
         })
 
     logging.debug('downstream stats: %s', stats['downstream'])
-    if not stats['downstream']:
-        logging.error('Failed to get any downstream stats! If you have selected the correct modem, then this could be a parsing issue in %s', __file__)
+    if len(stats['downstream']) == 0:
+        logging.error('Failed to get any downstream stats! Probably a parsing issue in parse_html_sb8200()')
 
     # upstream table
-    stats['upstream'] = []
     for table_row in soup.find_all("table")[3].find_all("tr"):
         if table_row.th:
             continue
@@ -85,14 +86,13 @@ def parse_html_sb6183(html):
         '''
 
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
-        channel = table_row.find_all('td')[0].text.strip()
-        if not channel.isdigit():
+        channel_id = table_row.find_all('td')[0].text.strip()
+        if not channel_id.isdigit():
             continue
 
-        channel_id = table_row.find_all('td')[3].text.strip()
-        symbol_rate = table_row.find_all('td')[4].text.replace(" Ksym/sec", "").strip()
-        frequency = table_row.find_all('td')[5].text.replace(" Hz", "").strip()
-        power = table_row.find_all('td')[6].text.replace(" dBmV", "").strip()
+        symbol_rate = int(table_row.find_all('td')[4].text.replace(" Ksym/sec", "").strip())
+        frequency = int(table_row.find_all('td')[5].text.replace(" Hz", "").strip())
+        power = float(table_row.find_all('td')[6].text.replace(" dBmV", "").strip())
 
         stats['upstream'].append({
             'channel_id': channel_id,
@@ -102,7 +102,7 @@ def parse_html_sb6183(html):
         })
 
     logging.debug('upstream stats: %s', stats['upstream'])
-    if not stats['upstream']:
-        logging.error('Failed to get any upstream stats! If you have selected the correct modem, then this could be a parsing issue in %s', __file__)
+    if len(stats['upstream']) == 0:
+        logging.error('Failed to get any upstream stats! Probably a parsing issue in parse_html_sb8200()')
 
     return stats
