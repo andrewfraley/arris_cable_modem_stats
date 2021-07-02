@@ -325,7 +325,10 @@ def send_to_influx(stats, config):
         for field in stats_down:
             if field == 'channel_id':
                 continue
-            record['fields'][field] = stats_down[field]
+            if '.' in stats_down[field]:
+                record['fields'][field] = float(stats_down[field])
+            else:
+                record['fields'][field] = int(stats_down[field])
         series.append(record)
 
     for stats_up in stats['upstream']:
@@ -340,7 +343,10 @@ def send_to_influx(stats, config):
         for field in stats_up:
             if field == 'channel_id':
                 continue
-            record['fields'][field] = stats_up[field]
+            if '.' in stats_up[field]:
+                record['fields'][field] = float(stats_up[field])
+            else:
+                record['fields'][field] = int(stats_up[field])
         series.append(record)
 
     try:
@@ -402,10 +408,10 @@ def send_to_aws_time_stream(stats, config):
     logging.debug("Converting to timestream - %s" % stats)
 
     downstream_common_attributes = {
-            'Dimensions': [{'Name': 'measurement', 'Value': 'downstream_statistics'}],
-            'Time': str(current_time),
-            'TimeUnit': 'NANOSECONDS'
-        }
+        'Dimensions': [{'Name': 'measurement', 'Value': 'downstream_statistics'}],
+        'Time': str(current_time),
+        'TimeUnit': 'NANOSECONDS'
+    }
     downstream_records = []
     for stats_down in stats['downstream']:
         for key in stats_down:
