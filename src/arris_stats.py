@@ -106,6 +106,8 @@ def main():
         # Where should 6we send the results?
         if destination == 'influxdb':
             send_to_influx(stats, config)
+        elif destination == 'timestream':
+            send_to_aws_time_stream(stats, config)
         else:
             error_exit('Destination %s not supported!  Aborting.' % destination, sleep=False)
 
@@ -119,12 +121,8 @@ def get_args():
     return args
 
 
-def get_config(config_path=None):
-    """ Grab config from the ini config file,
-        then grab the same variables from ENV to override
-    """
-
-    default_config = {
+def get_default_config():
+    return {
 
         # Main
         'arris_stats_debug': False,
@@ -149,8 +147,22 @@ def get_config(config_path=None):
         'influx_password': None,
         'influx_use_ssl': False,
         'influx_verify_ssl': True,
+
+        # AWS Timestream
+        'timestream_aws_access_key_id': None,
+        'timestream_aws_secret_access_key': None,
+        'timestream_database': 'cable_modem_stats',
+        'timestream_table': 'cable_modem_stats',
+        'timestream_aws_region': 'us-east-1'
     }
 
+
+def get_config(config_path=None):
+    """ Grab config from the ini config file,
+        then grab the same variables from ENV to override
+    """
+
+    default_config = get_default_config()
     config = default_config.copy()
 
     # Get config from config.ini first
@@ -302,34 +314,34 @@ def send_to_influx(stats, config):
     current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     for stats_down in stats['downstream']:
-
-        series.append({
+        record = {
             'measurement': 'downstream_statistics',
             'time': current_time,
-            'fields': {
-                'frequency': int(stats_down['frequency']),
-                'power': float(stats_down['power']),
-                'snr': float(stats_down['snr']),
-                'corrected': int(stats_down['corrected']),
-                'uncorrectables': int(stats_down['uncorrectables'])
-            },
+            'fields': {},
             'tags': {
                 'channel_id': int(stats_down['channel_id'])
             }
-        })
+        }
+        for field in stats_down:
+            if field == 'channel_id':
+                continue
+            record['fields'][field] = stats_down[field]
+        series.append(record)
 
     for stats_up in stats['upstream']:
-        series.append({
+        record = {
             'measurement': 'upstream_statistics',
             'time': current_time,
-            'fields': {
-                'frequency': int(stats_up['frequency']),
-                'power': float(stats_up['power']),
-            },
+            'fields': {},
             'tags': {
                 'channel_id': int(stats_up['channel_id'])
             }
-        })
+        }
+        for field in stats_up:
+            if field == 'channel_id':
+                continue
+            record['fields'][field] = stats_up[field]
+        series.append(record)
 
     try:
         influx_client.write_points(series)
@@ -349,6 +361,112 @@ def send_to_influx(stats, config):
     logging.info('Successfully wrote data to InfluxDB')
     logging.debug('Influx series sent to db:')
     logging.debug(series)
+
+
+def send_to_aws_time_stream(stats, config):
+    """ Send the stats to AWS Timestream """
+    logging.info('Sending stats to Timestream (database=%s)', config['timestream_database'])
+
+    import boto3
+    from botocore.config import Config
+
+    region_config = Config(
+        region_name=config['timestream_aws_region']
+    )
+
+    ts_client = boto3.client(
+        'timestream-write',
+        aws_access_key_id=config['timestream_aws_access_key_id'],
+        aws_secret_access_key=config['timestream_aws_secret_access_key'],
+        config=region_config
+    )
+
+    try:
+        # Attempt to validate connection to database and table
+        # Error out and return if not able to access / connection isn't valid
+        database = ts_client.describe_database(
+            DatabaseName=config['timestream_database']
+        )
+        logging.debug("Database details = %s" % database)
+
+        table = ts_client.describe_table(
+            DatabaseName=config['timestream_database'],
+            TableName=config['timestream_table']
+        )
+        logging.debug("Table details = %s" % table)
+    except Exception as err:
+        logging.error(err)
+        return
+
+    current_time = time.time_ns()
+    logging.debug("Converting to timestream - %s" % stats)
+
+    downstream_common_attributes = {
+            'Dimensions': [{'Name': 'measurement', 'Value': 'downstream_statistics'}],
+            'Time': str(current_time),
+            'TimeUnit': 'NANOSECONDS'
+        }
+    downstream_records = []
+    for stats_down in stats['downstream']:
+        for key in stats_down:
+            if key == 'channel_id':
+                continue
+
+            downstream_records.append({
+                'Dimensions': [
+                    {'Name': 'channel_id', 'Value': str(stats_down['channel_id'])},
+                    {'Name': 'group', 'Value': 'downstream_statistics'}
+                ],
+                'MeasureName': key,
+                'MeasureValue': str(stats_down[key]),
+                'MeasureValueType': 'DOUBLE' if isinstance(stats_down[key], float) else 'BIGINT'
+            })
+
+    try:
+        logging.debug("Writing common attributes: %s" % downstream_common_attributes)
+        logging.debug("Writing records: %s" % downstream_records)
+        result = ts_client.write_records(DatabaseName=config['timestream_database'],
+                                         TableName=config['timestream_table'], Records=downstream_records,
+                                         CommonAttributes=downstream_common_attributes)
+        logging.info("Timestream response = %s" % result)
+        logging.info("Wrote %s records to TimeStream" % len(downstream_records))
+    except (ts_client.exceptions.RejectedRecordsException, Exception) as err:
+        logging.error(err)
+
+    upstream_common_attributes = {
+        'Dimensions': [{'Name': 'measurement', 'Value': 'upstream_statistics'}],
+        'Time': str(current_time),
+        'TimeUnit': 'NANOSECONDS'
+    }
+    upstream_records = []
+    for stats_up in stats['upstream']:
+        for key in stats_up:
+            if key == 'channel_id':
+                continue
+
+            upstream_records.append({
+                'Dimensions': [
+                    {'Name': 'channel_id', 'Value': str(stats_up['channel_id'])},
+                    {'Name': 'group', 'Value': 'upstream_statistics'}
+                ],
+                'MeasureName': key,
+                'MeasureValue': str(stats_up[key]),
+                'MeasureValueType': 'DOUBLE' if isinstance(stats_up[key], float) else 'BIGINT'
+            })
+
+    try:
+        logging.debug("Writing common attributes: %s" % upstream_common_attributes)
+        logging.debug("Writing records: %s" % upstream_records)
+        result = ts_client.write_records(DatabaseName=config['timestream_database'],
+                                         TableName=config['timestream_table'], Records=upstream_records,
+                                         CommonAttributes=upstream_common_attributes)
+        logging.info("Timestream response = %s" % result)
+        logging.info("Wrote %s records to TimeStream" % len(upstream_records))
+    except (ts_client.exceptions.RejectedRecordsException, Exception) as err:
+        logging.error(err)
+        return
+
+    logging.info('Successfully wrote data to Timestream')
 
 
 def error_exit(message, config=None, sleep=True):

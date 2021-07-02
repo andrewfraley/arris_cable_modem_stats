@@ -19,7 +19,12 @@ ENV arris_stats_debug=False \
   influx_username=None \
   influx_password=None \
   influx_use_ssl=False \
-  influx_verify_ssl=True
+  influx_verify_ssl=True \
+  timestream_aws_access_key_id=None \
+  timestream_aws_secret_access_key=None \
+  timestream_database=cable_modem_stats \
+  timestream_table=cable_modem_stats \
+  timestream_aws_region=us-east-1
 
 
 ADD src/ /src

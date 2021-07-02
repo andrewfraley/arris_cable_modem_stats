@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<!-- saved from url=(0021)http://192.168.100.1/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Status</title>
+
+<!-- Temp disable <meta name="viewport" content="width=device-width"> -->
+<script src="./sb6123_files/jquery-1.7.1.min.js"></script>
+<script src="./sb6123_files/json2.js"></script>
+<script src="./sb6123_files/main.js"></script>
+
+
+<!-- START HTMLHEADER.HTML ADDITIONS -->
+	
+	<!-- typography -->
+	<link href="./sb6123_files/styles.css" rel="stylesheet">
+	<!-- layout -->
+	<link href="./sb6123_files/styles_layout.css" rel="stylesheet">
+	<!-- images and colors -->
+	<link id="pictures_css" href="./sb6123_files/styles_images_arris.css" rel="stylesheet">
+	
+ <!-- END HTMLHEADER ADDITIONS -->
+<script type="text/javascript">
+         var cusID = 14;
+         var platformType = 0;
+		
+	   if (cusID == 14 || (cusID == 1 && platformType == 17))
+           {
+               document.getElementById('pictures_css').href ="css/styles_images_arris.css";
+	   }
+</script>
+
+</head>
+<body onload="load()">
+
+   <!-- Header Area Begin -->
+<div class="header">
+
+
+<!-- START pageheaderA.htm -->
+
+    <!-- modal overlay semi-opaque background, black -->
+    <div id="modalUnderlayBlack" class="modalUnderlayBlack modalDisplayBlack" style="display:none;"></div>
+
+     <!-- modal overlay semi-opaque background, white -->
+    <div id="modalUnderlayWhite" class="modalUnderlayWhite modalDisplayWhite" style="display:none;"></div>
+
+
+    <!-- MESSAGE MODAL -->
+    <!-- floater w/shadow background -->
+    <div id="modalFloaterMessage" class="modalDisplayBlack modalDisplayWhite" style="display:none;"></div>
+
+    <!-- floater inset container -->
+    <div id="modalContainerMessage" class="modalDisplayBlack modalDisplayWhite" style="display:none;">
+        <div id="modalContainerMessageTitle">
+   <span class="modalContainerMessageTitleText" id="modalContainerMessageTitleText">Confirm Settings</span>
+  </div>
+        <div id="modalContainerMessageAlert" class="vertCenterWrap1">
+   <div class="vertCenterWrap2">
+    <div class="vertCenterWrap3">
+              <div class="modalContainerMessageAlertText" id="modalContainerMessageAlertText"></div>
+              <div class="modalContainerMessageAlertText" id="modalContainerMessageAlertTextPrompt"><strong>Do you want to continue?</strong></div>
+              <div class="modalContainerMessageAlertButtons">
+      <input type="button" class="modalButton" id="modalButtonYes" value="Disable WPS and Continue">
+      <input type="button" class="modalButton" id="modalButtonNo" value="Cancel">
+     </div>
+          </div>
+   </div>
+  </div>
+        <div id="modalContainerMessageAlertImage"><img src="./sb6123_files/px1_Ux.png" alt="" class="wizardFrameSpriteImage_12"></div>
+   </div>
+    <!-- END MESSAGE MODAL -->
+
+    <div id="pw1"><div id="pw2"><div id="pw3"><div id="pw4">
+
+  <div id="hg1"><div id="hg2"><div id="hg3"><div id="hg4"><div id="hg5"><div id="hg6"><div id="hg7">
+
+            <div id="logo"><a href="http://www.arris.com/"><img src="./sb6123_files/px1_Ux.png" alt="ARRIS Logo" title="ARRIS Logo" class="logo"></a></div>
+
+   <div id="binnacleWrapper1" class="binnacleItems_hide binnacleItems_0" style="">
+                <div id="binnacleWrapper2" class="binnacleItems_hide binnacleItems_0" style="">
+                    <div id="binnacleWrapperLeft"><img src="./sb6123_files/px1_Ux.png" alt="" class="binnacleWrapperShim"></div>
+                    <div id="binnacleWrapperRight"><img src="./sb6123_files/px1_Ux.png" alt="" class="binnacleWrapperShim"></div>
+                    <div id="binnacleWrapperMiddle">
+                        <div id="binnacleInnards">
+                            
+       <div id="binnacleIndicatorWrap"></div>
+                            <div id="binnacleModelName"><span id="thisModelNumberIs">SB6183</span></div>
+                        </div>
+                    </div>
+                <!-- end binnacleWrapper1/2 -->
+    </div>
+   </div>
+
+  <!-- end divs for hg -->
+  </div></div></div></div></div></div></div>
+
+  <!--gap--><div id="tmtg"><div class="gap1"><div class="gap2"><div class="gap3"><div class="gap4"></div></div></div></div></div>
+
+  <div id="tmg1"><div id="tmg2"><div id="tmg3"><div id="tmg4"><div id="tmg5"><div id="tmg6">
+<!-- END pageheaderA.htm ADDITIONS -->
+  <script>
+   $(document).ready(function(){
+
+   // Strip the default values.
+   $("#binnacleWrapper1").removeClass("binnacleItems_0");
+   $("#binnacleWrapper2").removeClass("binnacleItems_0");
+   // Set number of items in binnacle (0 to 8)
+   $("#binnacleWrapper1").addClass("binnacleItems_0");
+   $("#binnacleWrapper2").addClass("binnacleItems_0");
+   // Show the binnacle.
+   $("#binnacleWrapper1").show();
+   $("#binnacleWrapper2").show();
+
+   });
+   // End READY functon
+  </script>
+
+<!-- END pageheaderA.htm -->
+
+<script language="javascript" type="text/javascript">
+var hiddenMenuList = '';
+</script>
+
+
+<div id="topMenu"><ul id="uberAwesomeMenu" class="mainMenu"><li class="mainMenu mainMenuItems_6 menuClickable"><a href="http://192.168.100.1/RgConnect.asp">STATUS</a></li><li class="mainMenu mainMenuItems_6 menuClickable"><a href="http://192.168.100.1/RgSwInfo.asp">PRODUCT INFORMATION</a></li><li class="mainMenu mainMenuItems_6 menuClickable"><a href="http://192.168.100.1/RgEventLog.asp">EVENT LOG</a></li><li class="mainMenu mainMenuItems_6 menuClickable"><a href="http://192.168.100.1/RgAddress.asp">ADDRESSES</a></li><li class="mainMenu mainMenuItems_6 menuClickable"><a href="http://192.168.100.1/RgConfiguration.asp">CONFIGURATION</a></li><li class="mainMenu mainMenuItems_6 menuClickable mainMenuLast"><a href="http://192.168.100.1/StatusHelp.asp">HELP</a></li></ul></div>
+
+<script type="text/javascript">
+
+ var menuCM = [
+  {name:'STATUS', subMenu: [
+   {name:'null',
+    linkUrl:'RgConnect.asp',
+    menuID:'menu3e'}
+  ]},
+  {name:'PRODUCT INFORMATION', subMenu: [
+   {name:'null',
+    linkUrl:'RgSwInfo.asp',
+    menuID:'menu21'}
+  ]},
+  {name:'EVENT LOG', subMenu: [
+   {name:'null',
+    linkUrl:'RgEventLog.asp',
+    menuID:'menu43'}
+  ]},
+  {name:'ADDRESSES', subMenu: [
+   {name:'null',
+    linkUrl:'RgAddress.asp',
+    menuID:'menuff'}
+  ]},
+  {name:'CONFIGURATION', subMenu: [
+   {name:'null',
+    linkUrl:'RgConfiguration.asp',
+    menuID:'menu39'}
+  ]},
+  {name:'HELP', subMenu: [
+   {name:'null',
+    linkUrl:'StatusHelp.asp',
+    menuID:'menu9d'}
+  ]}
+ ];
+ var menuGW = [
+  {name:'HOME', subMenu: [
+   {name:'null',
+    linkUrl:'home.asp',
+    menuID:'menua6'}
+  ]},
+
+  {name:'STATUS', subMenu: [
+   {name:'Product Information',
+    linkUrl:'RgSwInfo.asp',
+    menuID:'menu21'},
+
+   {name:'Connection',
+    linkUrl:'RgConnect.asp',
+    menuID:'menu3e'},
+
+   {name:'Security',
+    linkUrl:'RgSecurity.asp',
+    menuID:'menua'},
+
+   {name:'Diagnostics',
+    linkUrl:'RgDiagnostics.asp',
+    menuID:'menu53'},
+
+   {name:'Event Log',
+    linkUrl:'RgEventLog.asp',
+    menuID:'menu43'},
+
+   {name:'Configuration',
+    linkUrl:'RgConfiguration.asp',
+    menuID:'menu39'}
+  ]},
+
+  {name:'BASIC', subMenu: [
+   {name:'Setup',
+    linkUrl:'RgSetup.asp',
+    menuID:'menu41'},
+
+   {name:'DHCP',
+    linkUrl:'RgDhcp.asp',
+    menuID:'menu13'},
+
+   {name:'DHCPv6',
+    linkUrl:'RgDhcpV6.asp',
+    menuID:'menu9f'},
+
+   {name:'IPv6 Clients',
+    linkUrl:'RgIPv6Clients.asp',
+    menuID:'menu84'},
+
+   {name:'DDNS',
+    linkUrl:'RgDdns.asp',
+    menuID:'menu6b'},
+
+   {name:'Backup and Restore',
+    linkUrl:'RgBackup.asp',
+    menuID:'menu3a'},
+
+   {name:'MoCA',
+    linkUrl:'MoCA.asp',
+    menuID:'menu93'},
+
+   {name:'USB Connect',
+    linkUrl:'USB.asp',
+    menuID:'menu96'},
+
+   {name:'Ethernet Ports',
+    linkUrl:'RgEthPort.asp',
+    menuID:'menu95'},
+
+   {name:'LED Control',
+    linkUrl:'LedControl.asp',
+    menuID:'menuab'}
+  ]},
+
+  {name:'ADVANCED', subMenu: [
+   {name:'Options',
+    linkUrl:'RgOptions.asp',
+    menuID:'menu50'},
+
+   {name:'IP Filtering',
+    linkUrl:'RgIpFiltering.asp',
+    menuID:'menu2b'},
+
+   {name:'MAC Filtering',
+    linkUrl:'RgMacFiltering.asp',
+    menuID:'menu2f'},
+
+   {name:'Port Filtering',
+    linkUrl:'RgPortFiltering.asp',
+    menuID:'menu29'},
+
+   {name:'Port Triggers',
+    linkUrl:'RgPortTriggering.asp',
+    menuID:'menu1e'},
+
+   {name:'Port Forwarding',
+    linkUrl:'RgForwarding.asp',
+    menuID:'menu63'},
+
+   {name:'DMZ Host',
+    linkUrl:'RgDmzHost.asp',
+    menuID:'menu6'},
+
+   {name:'RIP',
+    linkUrl:'RgRipSetup.asp',
+    menuID:'menu8'},
+
+   {name:'Linux Apps',
+    linkUrl:'NASWebInterface/admin/index.php?user=admin',
+    menuID:'menu9e'}
+  ]},
+
+  {name:'WIRELESS', subMenu: [
+   {name:'802.11 Radio',
+    linkUrl:'wlanRadio.asp',
+    menuID:'menu20'},
+
+   {name:'Primary Network Settings',
+    linkUrl:'wlanPrimaryNetwork.asp',
+    menuID:'menu68'},
+
+   {name:'Guest Network Settings',
+    linkUrl:'wlanGuestNetwork.asp',
+    menuID:'menu10'},
+
+   {name:'Access Control',
+    linkUrl:'wlanAccess.asp',
+    menuID:'menu32'},
+
+   {name:'Extend Network Range',
+    linkUrl:'wlanBridging.asp',
+    menuID:'menuc'},
+
+   {name:'WMM Quality of Service',
+    linkUrl:'wlanWmm.asp',
+    menuID:'menu42'},
+
+   {name:'Performance Enhancements',
+    linkUrl:'wlanMedia.asp',
+    menuID:'menua8'},
+
+   {name:'Advanced',
+    linkUrl:'wlanAdvanced.asp',
+    menuID:'menu33'}
+  ]},
+
+  {name:'FIREWALL', subMenu: [
+   {name:'Protection Level',
+    linkUrl:'RgContentFilter.asp',
+    menuID:'menu52'},
+
+   {name:'Parental Control',
+    linkUrl:'RgFiltering.asp',
+    menuID:'menu8e'},
+
+   {name:'Local Log',
+    linkUrl:'RgFirewallEL.asp',
+    menuID:'menu4d'},
+
+   {name:'Remote Log',
+    linkUrl:'RgFirewallRL.asp',
+    menuID:'menu46'}
+  ]},
+
+  {name:'VPN', subMenu: [
+   {name:'L2TPv3',
+    linkUrl:'RgVpnL2tpV3.asp',
+    menuID:'menu7d'},
+
+   {name:'Event Log',
+    linkUrl:'RgVpnEventLog.asp',
+    menuID:'menu58'}
+  ]},
+
+  {name:'TELEPHONY', subMenu: [
+   {name:'Status',
+    linkUrl:'MtaStatus.asp',
+    menuID:'menu3d'},
+
+   {name:'MTA DHCP',
+    linkUrl:'MtaDhcp.asp',
+    menuID:'menu6a'},
+
+   {name:'Provisioning Details',
+    linkUrl:'MtaProvisioning.asp',
+    menuID:'menu45'},
+
+   {name:'QoS Parameters',
+    linkUrl:'MtaQos.asp',
+    menuID:'menu44'},
+
+   {name:'Event Log',
+    linkUrl:'MtaEventLog.asp',
+    menuID:'menu26'},
+
+   {name:'Battery Charger',
+    linkUrl:'BatController.asp',
+    menuID:'menu30'},
+
+   {name:'Power Management',
+    linkUrl:'BatInterfaceDelay.asp',
+    menuID:'menu3f'},
+
+   {name:'Battery Pack Information',
+    linkUrl:'BatUps.asp',
+    menuID:'menu5c'}
+  ]},
+
+  {name:'HELP', subMenu: [
+   {name:'Overview',
+    linkUrl:'help.asp',
+    menuID:'menu9d'},
+
+   {name:'About',
+    linkUrl:'About.asp',
+    menuID:'menua7'}
+  ]}
+ ];
+        var menuItem = menuCM;
+</script>
+
+<!-- START pageheaderB.htm -->
+
+<!-- START pageheaderB.htm ADDITIONS -->
+		<!-- end divs for tmg -->
+		</div></div></div></div></div></div>
+		
+		<!--gap--><div id="tmbg"><div class="gap1"><div class="gap2"><div class="gap3"><div class="gap4"></div></div></div></div></div>
+		
+		<div id="bg1"><div id="bg2"><div id="bg3"><div id="bg4">
+<!-- END pageheaderB.htm ADDITIONS -->
+
+<!-- END pageheaderB.htm -->
+</div>
+ <!-- End Header -->
+
+ <div class="container">
+  <div class="subHeader">
+   <div class="subHeadcontent">Status</div>
+  </div>
+ <div class="breadcrumbs">
+     <a href="http://192.168.100.1/home.asp"> Home</a> &gt; <a href="http://192.168.100.1/RgSwInfo.asp">Status</a> &gt; Connection </div>
+
+ <div class="content">
+        <div class="introText">
+      <p>The statuses listed show the connection state of the cable modem. They are used by your service provider to evaluate the operation of the cable modem.</p>
+     </div>
+
+
+  <form action="http://192.168.100.1/goform/RgConnect" method="post" name="RgConnect"><table><tbody><tr><td><input type="hidden" name="GetNonce" size="31" value=""> </td></tr></tbody></table>
+
+
+
+<!--
+   <center>
+   <table class="simpleTable">
+
+   <tr>
+             <th colspan="3">Startup Procedure</strong></th>
+            </tr>
+
+   <tr >
+             <td width="44%" ><strong><u>Procedure</u></strong></td>
+          <td width="31%" ><strong><u>Status</u></strong></td>
+                <td width="25%" ><strong><u>Comment</u></strong></td>
+   </tr>
+
+   <tr>
+             <td>Acquire Downstream Channel</td>
+       <td></td>
+       <td></td>
+   </tr>
+
+   <tr>
+             <td>Connectivity State</td>
+       <td></td>
+       <td></td>
+   </tr>
+
+   <tr>
+             <td>Boot State</td>
+    <td></td>
+       <td></td>
+   </tr>
+
+   
+
+   <tr>
+             <td >Security</td>
+    <td></td>
+       <td></td>
+   </tr>
+
+   <tr>
+             <td >DOCSIS Network Access Enabled</td>
+    <td>Allowed
+</td>
+   </tr>
+  </table>
+        </center>
+
+        <br clear="all" class="clearfloat">
+  <div class="spacer30"></div>
+-->
+<table class="simpleTable">
+<tbody><tr><th colspan="3">Startup Procedure
+</th></tr>
+<tr><td width="44%"><strong>Procedure
+</strong></td><td width="31%"><strong>Status
+</strong></td><td width="25%"><strong>Comment
+</strong></td></tr>
+<tr><td>Acquire Downstream Channel
+</td><td>&nbsp;</td><td>Locked
+</td></tr>
+<tr><td>Connectivity State
+</td><td>OK
+</td><td>Operational
+</td></tr>
+<tr><td>Boot State
+</td><td>OK
+</td><td>Operational
+</td></tr>
+<tr><td>Configuration File
+</td><td>OK
+</td><td></td></tr>
+<tr><td>Security
+</td><td>Enabled
+</td><td>BPI+
+</td></tr>
+<tr><td>DOCSIS Network Access Enabled
+</td><td>Allowed
+</td><td></td></tr></tbody></table>
+
+
+    <br clear="all" class="clearfloat">
+ <div class="spacer30"></div>
+
+        <center>
+        <table class="simpleTable">
+   <tbody><tr>
+    <th colspan="9"><strong>Downstream Bonded Channels</strong></th>
+   </tr>
+   <tr>
+    <td><strong>Channel</strong></td>
+    <td><strong>Lock Status</strong></td>
+    <td><strong>Modulation</strong></td>
+    <td><strong>Channel ID</strong></td>
+    <td><strong>Frequency</strong></td>
+    <td><strong>Power</strong></td>
+    <td><strong>SNR</strong></td>
+    <td><strong>Corrected</strong></td>
+    <td><strong>Uncorrectables</strong></td>
+   </tr>
+<tr><td>1</td><td>Locked
+</td><td>QAM256</td><td>29</td><td>603000000 Hz
+</td><td>-7.6 dBmV</td><td>37.0 dB</td><td>219</td><td>0</td></tr>
+<tr><td>2</td><td>Locked
+</td><td>QAM256</td><td>42</td><td>681000000 Hz
+</td><td>-6.7 dBmV</td><td>37.2 dB</td><td>157</td><td>0</td></tr>
+<tr><td>3</td><td>Locked
+</td><td>QAM256</td><td>43</td><td>687000000 Hz
+</td><td>-6.5 dBmV</td><td>37.2 dB</td><td>132</td><td>0</td></tr>
+<tr><td>4</td><td>Locked
+</td><td>QAM256</td><td>44</td><td>693000000 Hz
+</td><td>-6.3 dBmV</td><td>37.3 dB</td><td>102</td><td>0</td></tr>
+<tr><td>5</td><td>Locked
+</td><td>QAM256</td><td>33</td><td>627000000 Hz
+</td><td>-7.5 dBmV</td><td>37.0 dB</td><td>228</td><td>0</td></tr>
+<tr><td>6</td><td>Locked
+</td><td>QAM256</td><td>34</td><td>633000000 Hz
+</td><td>-7.7 dBmV</td><td>36.9 dB</td><td>289</td><td>0</td></tr>
+<tr><td>7</td><td>Locked
+</td><td>QAM256</td><td>35</td><td>639000000 Hz
+</td><td>-7.6 dBmV</td><td>36.9 dB</td><td>375</td><td>0</td></tr>
+<tr><td>8</td><td>Locked
+</td><td>QAM256</td><td>36</td><td>645000000 Hz
+</td><td>-7.5 dBmV</td><td>37.0 dB</td><td>329</td><td>0</td></tr>
+<tr><td>9</td><td>Locked
+</td><td>QAM256</td><td>37</td><td>651000000 Hz
+</td><td>-7.4 dBmV</td><td>37.1 dB</td><td>185</td><td>0</td></tr>
+<tr><td>10</td><td>Locked
+</td><td>QAM256</td><td>38</td><td>657000000 Hz
+</td><td>-7.1 dBmV</td><td>37.1 dB</td><td>199</td><td>0</td></tr>
+<tr><td>11</td><td>Locked
+</td><td>QAM256</td><td>39</td><td>663000000 Hz
+</td><td>-7.0 dBmV</td><td>37.1 dB</td><td>186</td><td>0</td></tr>
+<tr><td>12</td><td>Locked
+</td><td>QAM256</td><td>40</td><td>669000000 Hz
+</td><td>-7.2 dBmV</td><td>37.1 dB</td><td>96128</td><td>359367</td></tr>
+<tr><td>13</td><td>Locked
+</td><td>QAM256</td><td>41</td><td>675000000 Hz
+</td><td>-6.7 dBmV</td><td>36.9 dB</td><td>36896</td><td>142578</td></tr>
+<tr><td>14</td><td>Locked
+</td><td>QAM256</td><td>30</td><td>609000000 Hz
+</td><td>-7.5 dBmV</td><td>37.1 dB</td><td>201</td><td>0</td></tr>
+<tr><td>15</td><td>Locked
+</td><td>QAM256</td><td>31</td><td>615000000 Hz
+</td><td>-7.3 dBmV</td><td>37.1 dB</td><td>205</td><td>0</td></tr>
+<tr><td>16</td><td>Locked
+</td><td>QAM256</td><td>32</td><td>621000000 Hz
+</td><td>-7.4 dBmV</td><td>37.1 dB</td><td>173</td><td>0</td></tr>
+
+
+</tbody></table>
+        </center>
+
+<br clear="all" class="clearfloat">
+<div class="spacer30"></div>
+
+<center>
+  <table class="simpleTable">
+   <tbody><tr>
+    <th colspan="7"><strong>Upstream Bonded Channels</strong></th>
+   </tr>
+   <tr>
+    <td><strong>Channel</strong></td>
+    <td><strong>Lock Status</strong></td>
+                <td><strong>US Channel Type</strong></td>
+                <td><strong>Channel ID</strong></td>
+                <td><strong>Symbol Rate</strong></td>
+                <td><strong>Frequency</strong></td>
+                <td><strong>Power</strong></td>
+   </tr>
+<tr><td>1</td><td>Locked
+</td><td>ATDMA</td><td>4</td><td>5120 Ksym/sec</td><td>35600000 Hz
+</td><td>46.3 dBmV</td></tr>
+<tr><td>2</td><td>Locked
+</td><td>ATDMA</td><td>1</td><td>5120 Ksym/sec</td><td>16400000 Hz
+</td><td>45.7 dBmV</td></tr>
+<tr><td>3</td><td>Locked
+</td><td>ATDMA</td><td>2</td><td>5120 Ksym/sec</td><td>22800000 Hz
+</td><td>45.7 dBmV</td></tr>
+<tr><td>4</td><td>Locked
+</td><td>ATDMA</td><td>3</td><td>5120 Ksym/sec</td><td>29200000 Hz
+</td><td>47.2 dBmV</td></tr>
+
+  </tbody></table>
+        </center>
+
+<br>
+<!-- w20122: JKU 07-09-09: CR16167 - Hide menu when logged on as an admin -->
+
+
+
+
+<!-- end of CR16167 - Hide menu when logged on as an admin -->
+
+<br clear="all" class="clearfloat">
+<div class="spacer30"></div>
+
+<p id="systime" align="center"><strong>Current System Time:</strong> Thu Jul 01 21:05:30 2021
+</p>
+
+</form></div>
+
+
+
+
+
+<br clear="all" class="clearfloat">
+<div class="spacer40"></div>
+
+<!-- end .container --></div>
+
+<!-- START footer.htm ADDITIONS -->
+		<!-- end divs for bc -->
+		</div></div></div></div>
+		
+		<!--gap--><div id="bmtg"><div class="gap1"><div class="gap2"><div class="gap3"><div class="gap4"></div></div></div></div></div>
+		
+		
+		<div id="bmg1"><div id="bmg2"><div id="bmg3"><div id="bmg4"><div id="bmg5"><div id="bmg6">
+		
+	    <div id="siteMapBottom"><ul id="uberSiteMap" class="mainMenuB"><li class="mainMenuB mainMenuItems_6"><a href="http://192.168.100.1/RgConnect.asp">STATUS</a></li><li class="mainMenuB mainMenuItems_6"><a href="http://192.168.100.1/RgSwInfo.asp">PRODUCT INFORMATION</a></li><li class="mainMenuB mainMenuItems_6"><a href="http://192.168.100.1/RgEventLog.asp">EVENT LOG</a></li><li class="mainMenuB mainMenuItems_6"><a href="http://192.168.100.1/RgAddress.asp">ADDRESSES</a></li><li class="mainMenuB mainMenuItems_6"><a href="http://192.168.100.1/RgConfiguration.asp">CONFIGURATION</a></li><li class="mainMenuB mainMenuItems_6 mainMenuLast"><a href="http://192.168.100.1/StatusHelp.asp">HELP</a></li></ul></div>
+        <br clear="all" class="clearfloat">
+
+		</div></div></div></div></div></div>
+	
+		
+		<!--gap--><div id="bmbg"><div class="gap1"><div class="gap2"><div class="gap3"><div class="gap4"></div></div></div></div></div>
+
+
+		<div id="fg1"><div id="fg2"><div id="fg3"><div id="fg4"><div id="fg5"><div id="fg6"><div id="fg7">
+			
+			<div id="logo_bottom"><a href="http://www.arris.com/"><img src="./sb6123_files/px1_Ux.png" alt="ARRIS" title="ARRIS" class="logo_bottom"></a></div>
+
+			<div id="copyright">
+			<a href="http://www.arris.com/">©2019 ARRIS Group, Inc. ALL RIGHTS RESERVED.</a>
+			</div>
+
+		</div></div></div></div></div></div></div>
+		
+		
+		<div id="fgbl1"><div id="fgbl2"><div id="fgbl3"><div id="fgbl4"><img src="./sb6123_files/px1_Ux.png" alt="" title="" class="fgbl3"></div></div></div></div>
+
+    
+    <!-- end divs for pw -->
+    </div></div></div></div>
+
+<!-- END footer.htm ADDITIONS -->
+
+
+<script>
+
+function ShowNewWindow1()
+{
+ window.open("RgCmConfiguration.asp#connection","_blank", "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width=500, height=500");
+}
+
+function load()
+{
+ var customerID = 14;
+ var userLoginAccess = "???";
+
+ if (userLoginAccess == "User")
+ {
+  $("#systime").hide();
+ }
+}
+
+</script>
+
+
+
+</body></html>

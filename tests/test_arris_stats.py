@@ -11,32 +11,7 @@ import src.arris_stats as arris_stats
 class TestArrisStats(unittest.TestCase):
 
     # Required params and their defaults that we need to get from the config file or ENV
-    default_config = {
-
-        # Main
-        'arris_stats_debug': False,
-        'destination': 'influxdb',
-        'sleep_interval': 300,
-        'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',
-        'modem_verify_ssl': False,
-        'modem_auth_required': False,
-        'modem_username': 'admin',
-        'modem_password': None,
-        'modem_model': 'sb8200',
-        'exit_on_auth_error': True,
-        'exit_on_html_error': True,
-        'clear_auth_token_on_html_error': True,
-        'sleep_before_exit': True,
-
-        # Influx
-        'influx_host': 'localhost',
-        'influx_port': 8086,
-        'influx_database': 'cable_modem_stats',
-        'influx_username': None,
-        'influx_password': None,
-        'influx_use_ssl': False,
-        'influx_verify_ssl': True,
-    }
+    default_config = arris_stats.get_default_config()
 
     def test_get_config(self):
         """ Test arris_stats.get_config() """
@@ -97,7 +72,7 @@ class TestArrisStats(unittest.TestCase):
 
     def test_dockerfile(self):
         """ Ensure the docker file has the same hard coded ENV defaults """
-        default_config = self.default_config.copy()
+        default_config = arris_stats.get_default_config().copy()
         path = 'Dockerfile'
         with open(path, "r") as dockerfile:
             dockerfile_contents = dockerfile.read().splitlines()

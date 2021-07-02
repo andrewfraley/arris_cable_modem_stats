@@ -42,15 +42,18 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - arris_stats_debug = False
     - enables debug logs
 - destination = influxdb
-    - influxdb is the only valid option at this time
+    - Valid options include:
+      - influxdb - requires all influx_* params to be populated
+      - timestream - requires all timestream_* params to be populated
 - sleep_interval = 300
 - modem_url = https://192.168.100.1/cmconnectionstatus.html
+    - url for sb6183 = http://192.168.100.1/RgConnect.asp
 - modem_verify_ssl = False
 - modem_auth_required = False
 - modem_username = admin
 - modem_password = None
 - modem_model = sb8200
-    - only sb8200 and sb6163 are supported at this time
+    - models supported: sb6183, sb8200
 - exit_on_auth_error = True
     - Any auth error will cause an exit, useful when running in a Docker container to get a new session
 - exit_on_html_error = True
@@ -67,6 +70,11 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - influx_password = None
 - influx_use_ssl = False
 - influx_verify_ssl = True
+- timestream_aws_access_key_id = None
+- timestream_aws_secret_access_key = None
+- timestream_database = cable_modem_stats
+- timestream_table = cable_modem_stats
+- timestream_aws_region = us-east-1
 
 
 ### Debugging
@@ -78,11 +86,15 @@ You can enable debug logs in three ways:
 2. Set ENV variable ```arris_stats_debug = true```
 3. Set config.ini ```arris_stats_debug = true```
 
-## InfluxDB
+## Database Options
+
+### InfluxDB
 The database will be created automatically if the user has permissions (config.ini defaults to anonymous access).  You can set the database name in config.ini using the [INFLUXDB] database parameter.
 
-## Grafana
+### AWS Timestream
+Database and table are required to be created ahead of time using appropriate settings for your use-case. You can set the database name in config.ini using the [TIMESTREAM] database parameter.
 
+## Grafana
 There are two Grafana examples.  The first only relies on the Python script from this repo, while the second relies on [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/).
 
 ### SB8200 Dashboard
