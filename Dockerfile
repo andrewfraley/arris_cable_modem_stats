@@ -32,4 +32,8 @@ WORKDIR /src
 
 RUN pip install -r requirements.txt
 
-CMD ["python3","arris_stats.py","--config","config.ini"]
+# If you want to use a config.ini, this overrides all ENV vars
+# CMD ["python3","arris_stats.py","--config","config.ini"]
+
+# This uses the ENV vars and NOT config.ini
+CMD ["python3","arris_stats.py"]
