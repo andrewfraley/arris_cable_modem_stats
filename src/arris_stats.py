@@ -228,7 +228,6 @@ def get_token(config, session):
     # Requests will automatically handle the session cookies
     try:
         resp = session.get(auth_url, headers={'Authorization': 'Basic ' + auth_hash}, verify=verify_ssl)
-
         if resp.status_code != 200:
             logging.error('Error authenticating with %s', url)
             logging.error('Status code: %s', resp.status_code)
@@ -261,6 +260,8 @@ def get_html(config, token, session):
     verify_ssl = config['modem_verify_ssl']
 
     logging.info('Retreiving stats from %s', config['modem_url'])
+    logging.debug('Cookies: %s', session.cookies)
+    logging.debug('Full url: %s', url)
 
     try:
         resp = session.get(url, verify=verify_ssl)
@@ -277,7 +278,7 @@ def get_html(config, token, session):
         return None
 
     if 'Password:' in status_html:
-        logging.error('Authentication error, received login page.  Check username / password.  SB8200 has some kind of bug that can cause this after too many authentications, the only known fix is to reboot the modem.')
+        logging.error('Authentication error, received login page.  This can happen once when a new session is established and you should let it retry, but if it persists then check username / password.')
         if not config['modem_auth_required']:
             logging.warning('You have modem_auth_required to False, but a login page was detected!')
         return None
