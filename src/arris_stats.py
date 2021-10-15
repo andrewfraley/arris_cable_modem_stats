@@ -221,7 +221,7 @@ def get_token(config, session):
     token = username + ":" + password
     auth_hash = base64.b64encode(token.encode('ascii')).decode()
     auth_url = url + '?login_' + auth_hash
-    logging.debug('auth_url: %s', auth_url)
+    # logging.debug('auth_url: %s', auth_url)
 
     # This is going to respond with a token, which is a hash that we
     # have to send as a get parameter with subsequent requests
