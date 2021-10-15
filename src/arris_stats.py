@@ -159,7 +159,7 @@ def get_config(config_path=None):
 
     # Get config from config.ini if specified
     if config_path:
-
+        logging.info('Getting config from: %s', config_path)
         # Some hacky action to get the config without using section headings in the file
         # https://stackoverflow.com/a/10746467/866057
         parser = configparser.RawConfigParser()
@@ -170,8 +170,8 @@ def get_config(config_path=None):
 
         for param in default_config:
             config[param] = parser[section].get(param, default_config[param])
-    else:
-        # Get it from ENV
+    else:  # Get it from ENV
+        logging.info('Getting config from ENV')
         for param in config:
             if os.environ.get(param):
                 config[param] = os.environ.get(param)
