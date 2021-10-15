@@ -26,11 +26,10 @@ ENV arris_stats_debug=False \
   timestream_table=cable_modem_stats \
   timestream_aws_region=us-east-1
 
-
-ADD src/ /src
+COPY src/requirements.txt /src/requirements.txt
 WORKDIR /src
-
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src/ /src
 
 # If you want to use a config.ini, this overrides all ENV vars
 # CMD ["python3","arris_stats.py","--config","config.ini"]
