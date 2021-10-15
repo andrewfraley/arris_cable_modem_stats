@@ -16,7 +16,6 @@ def parse_html_sb6183(html):
 
     # Page to parse: http://192.168.100.1/RgConnect.asp
 
-    from bs4 import BeautifulSoup
     soup = BeautifulSoup(html, 'html.parser')
     stats = {
         'downstream': [],
@@ -24,7 +23,7 @@ def parse_html_sb6183(html):
     }
 
     # downstream table
-    logging.debug("Found %s tables" % len(soup.find_all("table")))
+    logging.debug("Found %s tables", len(soup.find_all("table")))
     for table_row in soup.find_all("table")[2].find_all("tr"):
         if table_row.th:
             continue
@@ -44,7 +43,7 @@ def parse_html_sb6183(html):
         '''
 
         channel_id = table_row.find_all('td')[0].text.strip()
-        logging.debug("Processing downstream channel %s" % channel_id)
+        logging.debug("Processing downstream channel %s", channel_id)
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
         if not channel_id.isdigit():
             continue
