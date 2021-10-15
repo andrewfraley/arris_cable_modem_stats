@@ -107,7 +107,7 @@ def main():
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=True)
+    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=False)
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
