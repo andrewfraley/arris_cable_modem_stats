@@ -110,7 +110,7 @@ class TestArrisStats(unittest.TestCase):
         """ Ensure the config file as the same hard coded defaults as default_config """
 
         default_config = self.default_config.copy()
-        path = 'src/config.ini'
+        path = 'src/config.ini.example'
         with open(path, "r") as configfile:
             config_contents = configfile.read().splitlines()
         for line in config_contents:

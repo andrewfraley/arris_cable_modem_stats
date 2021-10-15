@@ -13,7 +13,6 @@ import base64
 import logging
 import argparse
 import configparser
-from datetime import datetime
 import urllib3
 import requests
 
@@ -30,17 +29,6 @@ modems_supported = [
     'sb8200',
     'sb6183'
 ]
-
-# The modem is pretty finicky about the headers
-HEADERS = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Cache-Control': 'max-age=',
-    'Connection': 'keep-alive',
-    'DNT': '1',
-    'Upgrade-Insecure-Requests': '1',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0',
-}
 
 
 def main():
@@ -64,7 +52,8 @@ def main():
         urllib3.disable_warnings()
 
     # SB8200 requires authentication on Comcast now
-    credential = None
+    token = None
+    session = requests.Session()
 
     first = True
     while True:
@@ -75,23 +64,24 @@ def main():
         first = False
 
         if config['modem_auth_required']:
-            while not credential:
-                credential = get_credential(config)
-                if not credential and config['exit_on_auth_error']:
+            while not token:
+                token = get_token(config, session)
+                if not token and config['exit_on_auth_error']:
                     error_exit('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True', config)
-                if not credential:
+                if not token:
                     logging.info('Unable to obtain valid login session, sleeping for: %ss', sleep_interval)
                     time.sleep(sleep_interval)
 
         # Get the HTML from the modem
-        html = get_html(config, credential)
+        html = get_html(config, token, session)
         if not html:
             if config['exit_on_html_error']:
                 error_exit('No HTML obtained from modem.  Exiting since exit_on_html_error is True', config)
             logging.error('No HTML to parse, giving up until next interval')
             if config['clear_auth_token_on_html_error']:
                 logging.info('clear_auth_token_on_html_error is true, clearing credential token')
-                credential = None
+                token = None
+                session = requests.Session()
             continue
 
         # Get the function reference from the config dict
@@ -105,9 +95,11 @@ def main():
 
         # Where should 6we send the results?
         if destination == 'influxdb':
-            send_to_influx(stats, config)
+            import arris_stats_influx  # pylint: disable=import-outside-toplevel
+            arris_stats_influx.send_to_influx(stats, config)
         elif destination == 'timestream':
-            send_to_aws_time_stream(stats, config)
+            import arris_stats_aws_timestream  # pylint: disable=import-outside-toplevel
+            arris_stats_aws_timestream.send_to_aws_time_stream(stats, config)
         else:
             error_exit('Destination %s not supported!  Aborting.' % destination, sleep=False)
 
@@ -115,7 +107,7 @@ def main():
 def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=True)
+    parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=False)
     parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     args = parser.parse_args()
     return args
@@ -165,24 +157,24 @@ def get_config(config_path=None):
     default_config = get_default_config()
     config = default_config.copy()
 
-    # Get config from config.ini first
+    # Get config from config.ini if specified
     if config_path:
-
+        logging.info('Getting config from: %s', config_path)
         # Some hacky action to get the config without using section headings in the file
         # https://stackoverflow.com/a/10746467/866057
         parser = configparser.RawConfigParser()
         section = 'MAIN'
-        with open(config_path) as f:
-            file_content = '[%s]\n' % section + f.read()
+        with open(config_path) as fileh:
+            file_content = '[%s]\n' % section + fileh.read()
         parser.read_string(file_content)
 
         for param in default_config:
             config[param] = parser[section].get(param, default_config[param])
-
-    # Get it from ENV now and override anything we find
-    for param in config:
-        if os.environ.get(param):
-            config[param] = os.environ.get(param)
+    else:  # Get it from ENV
+        logging.info('Getting config from ENV')
+        for param in config:
+            if os.environ.get(param):
+                config[param] = os.environ.get(param)
 
     # Special handling depending ontype
     for param in config:
@@ -211,8 +203,8 @@ def get_config(config_path=None):
     return config
 
 
-def get_credential(config):
-    """ Get the cookie credential by sending the
+def get_token(config, session):
+    """ Get the auth token by sending the
         username and password pair for basic auth. They
         also want the pair as a base64 encoded get req param
     """
@@ -227,51 +219,52 @@ def get_credential(config):
     # encoded as a url param.  Look at the Javascript from the
     # login page for more info on the following.
     token = username + ":" + password
-    auth_hash = base64.b64encode(token.encode('ascii'))
-    auth_url = url + '?' + auth_hash.decode()
-    logging.debug('auth_url: %s', auth_url)
+    auth_hash = base64.b64encode(token.encode('ascii')).decode()
+    auth_url = url + '?login_' + auth_hash
+    # logging.debug('auth_url: %s', auth_url)
 
-    # This is going to respond with our "credential", which is a hash that we
-    # have to send as a cookie with subsequent requests
+    # This is going to respond with a token, which is a hash that we
+    # have to send as a get parameter with subsequent requests
+    # Requests will automatically handle the session cookies
     try:
-        resp = requests.get(auth_url, headers=HEADERS, auth=(username, password), verify=verify_ssl)
-
+        resp = session.get(auth_url, headers={'Authorization': 'Basic ' + auth_hash}, verify=verify_ssl)
         if resp.status_code != 200:
             logging.error('Error authenticating with %s', url)
             logging.error('Status code: %s', resp.status_code)
             logging.error('Reason: %s', resp.reason)
             return None
-
-        credential = resp.text
         resp.close()
     except Exception as exception:
         logging.error(exception)
         logging.error('Error authenticating with %s', url)
         return None
 
-    if 'Password:' in credential:
+    if 'Password:' in resp.text:
         logging.error('Authentication error, received login page.  Check username / password.  SB8200 has some kind of bug that can cause this after too many authentications, the only known fix is to reboot the modem.')
         return None
 
-    return credential
+    token = resp.text
+    return token
 
 
-def get_html(config, credential):
+def get_html(config, token, session):
     """ Get the status page from the modem
         return the raw html
     """
-    url = config['modem_url']
-    verify_ssl = config['modem_verify_ssl']
 
     if config['modem_auth_required']:
-        cookies = {'credential': credential}
+        url = config['modem_url'] + '?ct_' + token
     else:
-        cookies = None
+        url = config['modem_url']
 
-    logging.info('Retreiving stats from %s', url)
+    verify_ssl = config['modem_verify_ssl']
+
+    logging.info('Retreiving stats from %s', config['modem_url'])
+    logging.debug('Cookies: %s', session.cookies)
+    logging.debug('Full url: %s', url)
 
     try:
-        resp = requests.get(url, headers=HEADERS, cookies=cookies, verify=verify_ssl)
+        resp = session.get(url, verify=verify_ssl)
         if resp.status_code != 200:
             logging.error('Error retreiving html from %s', url)
             logging.error('Status code: %s', resp.status_code)
@@ -285,194 +278,12 @@ def get_html(config, credential):
         return None
 
     if 'Password:' in status_html:
-        logging.error('Authentication error, received login page.  Check username / password.  SB8200 has some kind of bug that can cause this after too many authentications, the only known fix is to reboot the modem.')
+        logging.error('Authentication error, received login page.  This can happen once when a new session is established and you should let it retry, but if it persists then check username / password.')
         if not config['modem_auth_required']:
             logging.warning('You have modem_auth_required to False, but a login page was detected!')
         return None
 
     return status_html
-
-
-def send_to_influx(stats, config):
-    """ Send the stats to InfluxDB """
-    logging.info('Sending stats to InfluxDB (%s:%s)', config['influx_host'], config['influx_port'])
-
-    from influxdb import InfluxDBClient
-    from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
-
-    influx_client = InfluxDBClient(
-        config['influx_host'],
-        config['influx_port'],
-        config['influx_username'],
-        config['influx_password'],
-        config['influx_database'],
-        config['influx_use_ssl'],
-        config['influx_verify_ssl'],
-    )
-
-    series = []
-    current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    for stats_down in stats['downstream']:
-        record = {
-            'measurement': 'downstream_statistics',
-            'time': current_time,
-            'fields': {},
-            'tags': {
-                'channel_id': int(stats_down['channel_id'])
-            }
-        }
-        for field in stats_down:
-            if field == 'channel_id':
-                continue
-            if '.' in stats_down[field]:
-                record['fields'][field] = float(stats_down[field])
-            else:
-                record['fields'][field] = int(stats_down[field])
-        series.append(record)
-
-    for stats_up in stats['upstream']:
-        record = {
-            'measurement': 'upstream_statistics',
-            'time': current_time,
-            'fields': {},
-            'tags': {
-                'channel_id': int(stats_up['channel_id'])
-            }
-        }
-        for field in stats_up:
-            if field == 'channel_id':
-                continue
-            if '.' in stats_up[field]:
-                record['fields'][field] = float(stats_up[field])
-            else:
-                record['fields'][field] = int(stats_up[field])
-        series.append(record)
-
-    try:
-        influx_client.write_points(series)
-    except (InfluxDBClientError, ConnectionError, InfluxDBServerError, ConnectionRefusedError) as exception:
-
-        # If DB doesn't exist, try to create it
-        if hasattr(exception, 'code') and exception.code == 404:
-            logging.warning('Database %s Does Not Exist.  Attempting to create database',
-                            config['influx_database'])
-            influx_client.create_database(config['influx_database'])
-            influx_client.write_points(series)
-        else:
-            logging.error(exception)
-            logging.error('Failed To Write To InfluxDB')
-            return
-
-    logging.info('Successfully wrote data to InfluxDB')
-    logging.debug('Influx series sent to db:')
-    logging.debug(series)
-
-
-def send_to_aws_time_stream(stats, config):
-    """ Send the stats to AWS Timestream """
-    logging.info('Sending stats to Timestream (database=%s)', config['timestream_database'])
-
-    import boto3
-    from botocore.config import Config
-
-    region_config = Config(
-        region_name=config['timestream_aws_region']
-    )
-
-    ts_client = boto3.client(
-        'timestream-write',
-        aws_access_key_id=config['timestream_aws_access_key_id'],
-        aws_secret_access_key=config['timestream_aws_secret_access_key'],
-        config=region_config
-    )
-
-    try:
-        # Attempt to validate connection to database and table
-        # Error out and return if not able to access / connection isn't valid
-        database = ts_client.describe_database(
-            DatabaseName=config['timestream_database']
-        )
-        logging.debug("Database details = %s" % database)
-
-        table = ts_client.describe_table(
-            DatabaseName=config['timestream_database'],
-            TableName=config['timestream_table']
-        )
-        logging.debug("Table details = %s" % table)
-    except Exception as err:
-        logging.error(err)
-        return
-
-    current_time = time.time_ns()
-    logging.debug("Converting to timestream - %s" % stats)
-
-    downstream_common_attributes = {
-        'Dimensions': [{'Name': 'measurement', 'Value': 'downstream_statistics'}],
-        'Time': str(current_time),
-        'TimeUnit': 'NANOSECONDS'
-    }
-    downstream_records = []
-    for stats_down in stats['downstream']:
-        for key in stats_down:
-            if key == 'channel_id':
-                continue
-
-            downstream_records.append({
-                'Dimensions': [
-                    {'Name': 'channel_id', 'Value': str(stats_down['channel_id'])},
-                    {'Name': 'group', 'Value': 'downstream_statistics'}
-                ],
-                'MeasureName': key,
-                'MeasureValue': str(stats_down[key]),
-                'MeasureValueType': 'DOUBLE' if isinstance(stats_down[key], float) else 'BIGINT'
-            })
-
-    try:
-        logging.debug("Writing common attributes: %s" % downstream_common_attributes)
-        logging.debug("Writing records: %s" % downstream_records)
-        result = ts_client.write_records(DatabaseName=config['timestream_database'],
-                                         TableName=config['timestream_table'], Records=downstream_records,
-                                         CommonAttributes=downstream_common_attributes)
-        logging.info("Timestream response = %s" % result)
-        logging.info("Wrote %s records to TimeStream" % len(downstream_records))
-    except (ts_client.exceptions.RejectedRecordsException, Exception) as err:
-        logging.error(err)
-
-    upstream_common_attributes = {
-        'Dimensions': [{'Name': 'measurement', 'Value': 'upstream_statistics'}],
-        'Time': str(current_time),
-        'TimeUnit': 'NANOSECONDS'
-    }
-    upstream_records = []
-    for stats_up in stats['upstream']:
-        for key in stats_up:
-            if key == 'channel_id':
-                continue
-
-            upstream_records.append({
-                'Dimensions': [
-                    {'Name': 'channel_id', 'Value': str(stats_up['channel_id'])},
-                    {'Name': 'group', 'Value': 'upstream_statistics'}
-                ],
-                'MeasureName': key,
-                'MeasureValue': str(stats_up[key]),
-                'MeasureValueType': 'DOUBLE' if isinstance(stats_up[key], float) else 'BIGINT'
-            })
-
-    try:
-        logging.debug("Writing common attributes: %s" % upstream_common_attributes)
-        logging.debug("Writing records: %s" % upstream_records)
-        result = ts_client.write_records(DatabaseName=config['timestream_database'],
-                                         TableName=config['timestream_table'], Records=upstream_records,
-                                         CommonAttributes=upstream_common_attributes)
-        logging.info("Timestream response = %s" % result)
-        logging.info("Wrote %s records to TimeStream" % len(upstream_records))
-    except (ts_client.exceptions.RejectedRecordsException, Exception) as err:
-        logging.error(err)
-        return
-
-    logging.info('Successfully wrote data to Timestream')
 
 
 def error_exit(message, config=None, sleep=True):

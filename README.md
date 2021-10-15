@@ -6,7 +6,7 @@ This is a Python script to scrape stats from the Arris cable modem web interface
 ## Authentication
 In late Oct 2020, Comcast deployed firmware updates to the SB8200 which now require authenticating against the modem.  If your modem requires authentication (you get a login page when browsing to https://192.168.100.1/), then you must edit your config.ini file (or set the matching ENV variables) and set ```modem_auth_required``` to ```True```, and set ```modem_password``` appropriately.  By default, your modem's password is the last eight characters of the serial number, located on a sticker on the bottom of the modem.
 
-There is some kind of bug (at least with Comcast's firmware) where the modem cannot handle more than ~10 sessions.  Once those sessions have been used up, it seems you must wait for them to expire or reboot the modem.  I have not been able to successfully log out of the sessions, but this script attempts to keep reusing the same session as long as it can.
+In October of 2021, Comcast again deployed new firmware that changed how authentication is handled.  The old login method is no longer supported, but if you are with a different carrier and still need the old login functionality, use release v1.2.0.  I have no way to test the old auth scheme, which is why it's no longer supported.
 
 ## Run Locally
 
@@ -37,7 +37,7 @@ Run in a Docker container with:
 Note that the same parameters from config.ini can be set as ENV variables, ENV overrides config.ini.
 
 ## Config Settings
-Config settings can be provided by the config.ini file, or set as ENV variables.  ENV variables override config.ini.
+Config settings can be provided by the config.ini file, or set as ENV variables.  If you run arris_stats.py with --config config.ini, ENV settings will be ignored.
 
 - arris_stats_debug = False
     - enables debug logs
