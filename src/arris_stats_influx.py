@@ -7,22 +7,26 @@
 
 import logging
 from datetime import datetime
-from influxdb import InfluxDBClient
-from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
-
+from influxdb_client import InfluxDBClient, BucketRetentionRules
+from influxdb_client.client.exceptions import InfluxDBError
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 def send_to_influx(stats, config):
     """ Send the stats to InfluxDB """
-    logging.info('Sending stats to InfluxDB (%s:%s)', config['influx_host'], config['influx_port'])
+    logging.info('Sending stats to InfluxDB (%s)', config['influx_url'])
+
+    token = config['influx_token']
+    url = config['influx_url']
+    org = config['influx_org']
+    bucket = config['influx_bucket']
+    verify_ssl = config['influx_verify_ssl']
 
     influx_client = InfluxDBClient(
-        config['influx_host'],
-        config['influx_port'],
-        config['influx_username'],
-        config['influx_password'],
-        config['influx_database'],
-        config['influx_use_ssl'],
-        config['influx_verify_ssl'],
+        url=url,
+        token=token,
+        org=org,
+        bucket=bucket,
+        verify_ssl=verify_ssl
     )
 
     series = []
@@ -64,16 +68,21 @@ def send_to_influx(stats, config):
                 record['fields'][field] = int(stats_up[field])
         series.append(record)
 
-    try:
-        influx_client.write_points(series)
-    except (InfluxDBClientError, ConnectionError, InfluxDBServerError, ConnectionRefusedError) as exception:
+    write_api = influx_client.write_api(write_options=SYNCHRONOUS)
 
-        # If DB doesn't exist, try to create it
+    try:
+        write_api.write(record=series,bucket=config['influx_bucket'])
+
+    except (InfluxDBError, ConnectionError, ConnectionRefusedError) as exception:
+
+        # If bucket doesn't exist, try to create it
         if hasattr(exception, 'code') and exception.code == 404:
-            logging.warning('Database %s Does Not Exist.  Attempting to create database',
-                            config['influx_database'])
-            influx_client.create_database(config['influx_database'])
-            influx_client.write_points(series)
+            logging.warning('Bucket %s Does Not Exist.  Attempting to create bucket', config['influx_bucket'])
+            buckets_api = influx_client.buckets_api()
+            retention_rules = BucketRetentionRules(type="expire", every_seconds=0)
+            buckets_api.create_bucket(bucket_name=config['influx_bucket'], retention_rules=retention_rules, org=org)
+            write_api.write(record=series,bucket=config['influx_bucket'])
+
         else:
             logging.error(exception)
             logging.error('Failed To Write To InfluxDB')
@@ -82,3 +91,5 @@ def send_to_influx(stats, config):
     logging.info('Successfully wrote data to InfluxDB')
     logging.debug('Influx series sent to db:')
     logging.debug(series)
+
+    influx_client.close()

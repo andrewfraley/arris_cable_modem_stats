@@ -62,13 +62,11 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
     - This is useful if you don't want to exit, but do want to get a new session if/when getting the stats fails
 - sleep_before_exit = True
     - If you want to sleep before exiting on errors, useful for Docker container when you have restart = always
-- influx_host = localhost
-- influx_port = 8086
-- influx_database = cable_modem_stats
+- influx_org = None
+- influx_url = http://localhost:8086
+- influx_bucket = cable_modem_stats
     - This will be created automatically if it can
-- influx_username = None
-- influx_password = None
-- influx_use_ssl = False
+- influx_token = None
 - influx_verify_ssl = True
 - timestream_aws_access_key_id = None
 - timestream_aws_secret_access_key = None

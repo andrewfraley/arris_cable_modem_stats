@@ -132,12 +132,10 @@ def get_default_config():
         'sleep_before_exit': True,
 
         # Influx
-        'influx_host': 'localhost',
-        'influx_port': 8086,
-        'influx_database': 'cable_modem_stats',
-        'influx_username': None,
-        'influx_password': None,
-        'influx_use_ssl': False,
+        'influx_org': None,
+        'influx_url': 'http://localhost:8086',
+        'influx_bucket': 'cable_modem_stats',
+        'influx_token': None,
         'influx_verify_ssl': True,
 
         # AWS Timestream
