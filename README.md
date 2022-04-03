@@ -8,6 +8,30 @@ In late Oct 2020, Comcast deployed firmware updates to the SB8200 which now requ
 
 In October of 2021, Comcast again deployed new firmware that changed how authentication is handled.  The old login method is no longer supported, but if you are with a different carrier and still need the old login functionality, use release v1.2.0.  I have no way to test the old auth scheme, which is why it's no longer supported.
 
+
+## Run with Docker
+
+### From DockerHub
+See other environment variables in Config Settings.  This image is automatically rebuilt every month.
+
+    docker pull afraley/arris_cable_modem_stats
+    docker run \
+    -e modem_password='last eight characters of the serial number' \
+    -e influx_host='influxhost.local' \
+    afraley/arris_cable_modem_stats
+
+### Build it yourself
+
+Run in a Docker container with the following (see other environment variables in Config Settings):
+
+    docker build -t arris_stats .
+    docker run \
+    -e modem_password='last eight characters of the serial number' \
+    -e influx_host='influxhost.local' \
+    afraley/arris_cable_modem_stats
+
+Note that the same parameters from config.ini can be set as ENV variables, ENV overrides config.ini.
+
 ## Run Locally
 
 - Install Python 3.8.x or later
@@ -27,14 +51,6 @@ In October of 2021, Comcast again deployed new firmware that changed how authent
     - ```modem_password = last_8_chars_of_modem_serial```
 - Run arris_stats.py
     - ```python3 arris_stats.py --config config.ini```
-
-## Docker
-Run in a Docker container with:
-
-    docker build -t arris_stats .
-    docker run arris_stats
-
-Note that the same parameters from config.ini can be set as ENV variables, ENV overrides config.ini.
 
 ## Config Settings
 Config settings can be provided by the config.ini file, or set as ENV variables.  If you run arris_stats.py with --config config.ini, ENV settings will be ignored.
