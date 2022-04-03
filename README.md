@@ -63,6 +63,7 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
     - Valid options include:
       - influxdb - requires all influx_* params to be populated
       - timestream - requires all timestream_* params to be populated
+      - splunk - requires all splunk_* params to be populated
 - sleep_interval = 300
 - modem_url = https://192.168.100.1/cmconnectionstatus.html
     - url for sb6183 = http://192.168.100.1/RgConnect.asp
@@ -93,6 +94,12 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - timestream_database = cable_modem_stats
 - timestream_table = cable_modem_stats
 - timestream_aws_region = us-east-1
+- splunk_host = None
+- splunk_port = 8088
+- splunk_token = None
+- splunk_ssl = False
+- splunk_verify_ssl = True
+- splunk_source = arris_cable_modem_stats
 
 
 ### Debugging
@@ -111,6 +118,17 @@ The database will be created automatically if the user has permissions (config.i
 
 ### AWS Timestream
 Database and table are required to be created ahead of time using appropriate settings for your use-case. You can set the database name in config.ini using the [TIMESTREAM] database parameter.
+
+### Splunk
+Basic support for sending stats to Splunk is available.  Stats are sent as _json data to the Splunk HTTP Event Collector.  To setup Splunk:
+
+- Go Settings->Data Inputs and click *HTTP Event Collector*.
+- Click *Global Settings* on the top right and set All Tokens to Enabled.
+- Optionally enable/disable SSL (set our splunk_ssl and splunk_verify_ssl variables accordingly)
+- Click save and then click *New Token* on the top right.
+- Give the token a name, all other defaults are ok, click next
+- Set the default index to an index of your choosing, ensure the index is added to the Allowed Indexes list.
+- Click Review then Submit, set our splunk_token ENV or config.ini value to the new token value.
 
 ## Grafana
 There are two Grafana examples.  The first only relies on the Python script from this repo, while the second relies on [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/).

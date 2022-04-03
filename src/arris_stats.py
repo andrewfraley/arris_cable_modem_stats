@@ -100,6 +100,9 @@ def main():
         elif destination == 'timestream':
             import arris_stats_aws_timestream  # pylint: disable=import-outside-toplevel
             arris_stats_aws_timestream.send_to_aws_time_stream(stats, config)
+        elif destination == 'splunk':
+            import arris_stats_splunk  # pylint: disable=import-outside-toplevel
+            arris_stats_splunk.send_to_splunk(stats, config)
         else:
             error_exit('Destination %s not supported!  Aborting.' % destination, sleep=False)
 
@@ -145,7 +148,15 @@ def get_default_config():
         'timestream_aws_secret_access_key': None,
         'timestream_database': 'cable_modem_stats',
         'timestream_table': 'cable_modem_stats',
-        'timestream_aws_region': 'us-east-1'
+        'timestream_aws_region': 'us-east-1',
+
+        # Splunk
+        'splunk_token': None,
+        'splunk_host': None,
+        'splunk_port': 8088,
+        'splunk_ssl': False,
+        'splunk_verify_ssl': True,
+        'splunk_source': 'arris_cable_modem_stats'
     }
 
 

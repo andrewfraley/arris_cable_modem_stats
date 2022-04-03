@@ -24,7 +24,13 @@ ENV arris_stats_debug=False \
   timestream_aws_secret_access_key=None \
   timestream_database=cable_modem_stats \
   timestream_table=cable_modem_stats \
-  timestream_aws_region=us-east-1
+  timestream_aws_region=us-east-1 \
+  splunk_host=None \
+  splunk_token=None \
+  splunk_port=8088 \
+  splunk_ssl=False \
+  splunk_verify_ssl=True \
+  splunk_source=arris_cable_modem_stats
 
 COPY src/requirements.txt /src/requirements.txt
 WORKDIR /src
