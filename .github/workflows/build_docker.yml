@@ -6,6 +6,8 @@ on:
     branches:
       - main
       - afraley/gadocker
+  schedule:
+    - cron:  '15 20 1 * *'
 jobs:
   docker:
     runs-on: ubuntu-latest
