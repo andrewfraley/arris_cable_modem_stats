@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - afraley/gadocker
 jobs:
   docker:
     runs-on: ubuntu-latest
