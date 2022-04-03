@@ -28,7 +28,7 @@ Run in a Docker container with the following (see other environment variables in
     docker run \
     -e modem_password='last eight characters of the serial number' \
     -e influx_host='influxhost.local' \
-    afraley/arris_cable_modem_stats
+    arris_stats
 
 Note that the same parameters from config.ini can be set as ENV variables, ENV overrides config.ini.
 
