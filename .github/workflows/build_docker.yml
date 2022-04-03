@@ -25,3 +25,9 @@ jobs:
         with:
           push: true
           tags: afraley/arris_cable_modem_stats:latest
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: afraley/arris_cable_modem_stats
