@@ -16,6 +16,7 @@ See other environment variables in Config Settings.  This image is automatically
 
     docker pull afraley/arris_cable_modem_stats
     docker run \
+    -e modem_auth_required=True \
     -e modem_password='last eight characters of the serial number' \
     -e influx_host='influxhost.local' \
     afraley/arris_cable_modem_stats
@@ -26,6 +27,7 @@ Run in a Docker container with the following (see other environment variables in
 
     docker build -t arris_stats .
     docker run \
+    -e modem_auth_required=True \
     -e modem_password='last eight characters of the serial number' \
     -e influx_host='influxhost.local' \
     arris_stats
