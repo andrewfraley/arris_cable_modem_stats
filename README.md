@@ -1,6 +1,6 @@
 # arris_cable_modem_stats
 
-This is a Python script to scrape stats from the Arris cable modem web interface.  Results are meant to be sent to InfluxDB for use with Grafana, but other targets could be added.  This currently only works with the Arris SB8200 and SB6183.  Credit goes to https://github.com/billimek/SB6183-stats-for-influxdb
+This is a Python script to scrape stats from the Arris cable modem web interface.  Results are meant to be sent to InfluxDB for use with Grafana, but also currently supports AWS Timestream and Splunk.  This currently only works with the Arris SB8200 and SB6183.  Credit goes to https://github.com/billimek/SB6183-stats-for-influxdb
 
 
 ## Authentication
@@ -19,6 +19,7 @@ See other environment variables in Config Settings.  This image is automatically
     -e modem_auth_required=True \
     -e modem_password='last eight characters of the serial number' \
     -e influx_host='influxhost.local' \
+    --restart unless-stopped \
     afraley/arris_cable_modem_stats
 
 ### Build it yourself
@@ -30,6 +31,7 @@ Run in a Docker container with the following (see other environment variables in
     -e modem_auth_required=True \
     -e modem_password='last eight characters of the serial number' \
     -e influx_host='influxhost.local' \
+    --restart unless-stopped \
     arris_stats
 
 Note that the same parameters from config.ini can be set as ENV variables, ENV overrides config.ini.
