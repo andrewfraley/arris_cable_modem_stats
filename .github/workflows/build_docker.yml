@@ -6,6 +6,8 @@ on:
     branches:
       - main
       - afraley/gadocker
+    paths:
+      - README.md
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -31,3 +33,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: afraley/arris_cable_modem_stats
+          short-description: ${{ github.event.repository.description }}
