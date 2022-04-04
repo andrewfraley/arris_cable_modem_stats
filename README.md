@@ -116,10 +116,10 @@ You can enable debug logs in three ways:
 ## Database Options
 
 ### InfluxDB
-The database will be created automatically if the user has permissions (config.ini defaults to anonymous access).  You can set the database name in config.ini using the [INFLUXDB] database parameter.
+The database will be created automatically if the user has permissions (defaults to anonymous access).  See Config Settings above for a list of ENV variables (or config.ini options).
 
 ### AWS Timestream
-Database and table are required to be created ahead of time using appropriate settings for your use-case. You can set the database name in config.ini using the [TIMESTREAM] database parameter.
+Database and table are required to be created ahead of time using appropriate settings for your use-case. See Config Settings above for a list of ENV variables (or config.ini options).
 
 ### Splunk
 Basic support for sending stats to Splunk is available.  Stats are sent as _json data to the Splunk HTTP Event Collector.  To setup Splunk:
