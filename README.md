@@ -131,6 +131,7 @@ Basic support for sending stats to Splunk is available.  Stats are sent as _json
 - Give the token a name, all other defaults are ok, click next
 - Set the default index to an index of your choosing, ensure the index is added to the Allowed Indexes list.
 - Click Review then Submit, set our splunk_token ENV or config.ini value to the new token value.
+- Update ENV or config.ini values for the splunk_ settings, and set ```destination = splunk```
 
 ## Grafana
 There are two Grafana examples.  The first only relies on the Python script from this repo, while the second relies on [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/).
