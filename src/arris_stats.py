@@ -27,7 +27,7 @@ import requests
 modems_supported = [
     'sb8200',
     'sb6183',
-    't23'
+    't25'
 ]
 
 
