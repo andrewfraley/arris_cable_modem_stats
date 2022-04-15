@@ -56,7 +56,7 @@ def parse_html_t23(html):
         if not channel_id.isdigit():
             continue
 
-        frequency = table_row.find_all('td')[2].text.replace(" Hz", "").strip()
+        frequency = table_row.find_all('td')[2].text.replace(" MHz", "").strip()
         power = table_row.find_all('td')[3].text.replace(" dBmV", "").strip()
         snr = table_row.find_all('td')[4].text.replace(" dB", "").strip()
         corrected = table_row.find_all('td')[7].text.strip()
@@ -86,9 +86,9 @@ def parse_html_t23(html):
         if not channel_id.isdigit():
             continue
 
-        symbol_rate = int(table_row.find_all('td')[5].text.replace(" kSym/s", "").strip())
-        frequency = float(table_row.find_all('td')[2].text.replace(" MHz", "").strip())
-        power = float(table_row.find_all('td')[3].text.replace(" dBmV", "").strip())
+        symbol_rate = table_row.find_all('td')[5].text.replace(" kSym/s", "").strip()
+        frequency = table_row.find_all('td')[2].text.replace(" MHz", "").strip()
+        power = table_row.find_all('td')[3].text.replace(" dBmV", "").strip()
 
         stats['upstream'].append({
             'channel_id': channel_id,
