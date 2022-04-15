@@ -14,7 +14,7 @@ def follow_redirect(session, config):
         soup = BeautifulSoup(res.content, 'html.parser')
         result = soup.find("meta", attrs={"http-equiv": "refresh"})
         if result:
-            # Extract the meta refresh as T23 firmware from comcast doesn't use a 403, :)
+            # Extract the meta refresh as T23 firmware doesn't use 403 redirects
             return _follow_redirect(
                 f"{_url[:_url.rfind('/')]}/{result.attrs['content'].split(';')[1].replace('url=', '')}")
         else:
@@ -32,7 +32,8 @@ def get_token_t23(config, session):
                               data={'username': config['modem_username'],
                                     'password': config['modem_password']})
     login_page.raise_for_status()
-    return "token_in_session"  # Dummy return the token as we don't have a token for url auth (Within session)
+    # Dummy return the token as we don't have a token for url auth (Within session)
+    return "token_in_session"
 
 
 def parse_html_t23(html):
@@ -51,6 +52,7 @@ def parse_html_t23(html):
         if table_row.th:
             continue
 
+        # Replace/remove "Downstream" to normalize with other models
         channel_id = table_row.find_all('td')[0].text.replace("Downstream", "").strip()
 
         if not channel_id.isdigit():
@@ -83,6 +85,7 @@ def parse_html_t23(html):
         if table_row.th:
             continue
 
+        # Replace/remove "Upstream" to normalize with other models
         channel_id = table_row.find_all('td')[0].text.replace("Upstream", "").strip()
         if not channel_id.isdigit():
             continue
