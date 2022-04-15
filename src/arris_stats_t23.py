@@ -1,5 +1,5 @@
 """
-    Functions for model SB8200
+    Functions for model T23
     https://github.com/andrewfraley/arris_cable_modem_stats
 """
 # pylint: disable=line-too-long
@@ -32,7 +32,7 @@ def get_token_t23(config, session):
                               data={'username': config['modem_username'],
                                     'password': config['modem_password']})
     login_page.raise_for_status()
-    return "token_in_sess"  # Dummy return their is no token to my knowledge, auth cookie is in requests.session :)
+    return "token_in_session"  # Dummy return the token as we don't have a token for url auth (Within session)
 
 
 def parse_html_t23(html):
@@ -56,7 +56,8 @@ def parse_html_t23(html):
         if not channel_id.isdigit():
             continue
 
-        frequency = table_row.find_all('td')[2].text.replace(" MHz", "").strip()
+        # Other models supply HZ not MHZ * 1000000 to have the same stuctures as the other ones
+        frequency = str(float(table_row.find_all('td')[2].text.replace(" MHz", "").strip()) * 1000000)
         power = table_row.find_all('td')[3].text.replace(" dBmV", "").strip()
         snr = table_row.find_all('td')[4].text.replace(" dB", "").strip()
         corrected = table_row.find_all('td')[7].text.strip()
