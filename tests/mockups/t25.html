@@ -1,0 +1,492 @@
+<!DOCTYPE HTML PUBLIC
+"-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<title>Touchstone Status</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta http-equiv="Pragma" content="no-cache">
+        
+    <script type="text/javascript">
+
+    function clearcounters() {
+        document.clear.submit();
+    }
+
+    var currentFpiRadioGrpState = 0;
+    var currentFpiPaaChkboxState = 0;
+    function setFpiState(radioGrpState, chkboxState) {
+        currentFpiRadioGrpState = radioGrpState;
+        currentFpiPaaChkboxState = chkboxState;
+    }
+    function onLoadPage() {
+        validateSession(); 
+        var btnApplyLag = document.getElementById('idBtnApplyLag');
+        btnApplyLag.addEventListener('click', lagModeConfirm);
+    }
+    function lagModeConfirm() {
+        var elem = document.getElementById('idLagChkbox');
+        var chk = elem.checked;
+        if (!confirm('Are you sure you wish to ' + (chk ? 'en' : 'dis') +
+                     'able link aggregation?\nChanging the state will result ' +
+                     'in a modem restart.\nClick OK to ' + (chk ? 'en' : 'dis') +
+                     'able link aggregation. Click Cancel to\nleave link aggregation ' +
+                     (chk ? 'dis' : 'en') + 'abled.')) {
+            // restore checkbox state
+            elem.checked = !chk;
+        } else {
+            elem.value = (chk ? '1' : '0');
+            addCsrfToken("csrf_token4");
+            document.getElementById('idLinkAgg').submit();
+        }
+    }
+    function fpiConfirm() {
+        var chkboxElem = document.getElementById('idPaaCheck');
+        var chkboxState = chkboxElem.checked ? 1 : 0;
+        var radioGrpElems = document.getElementsByName('fpiModeRadio');
+        var selectedMode = 0;
+        for (var idx = 0; idx < radioGrpElems.length; idx++) {
+            if (radioGrpElems[idx].checked) {
+                selectedMode = idx;
+            }
+        }
+        if (selectedMode != currentFpiRadioGrpState || chkboxState != currentFpiPaaChkboxState) {
+            if (confirm("Do you wish to continue?")) {
+                addCsrfToken("csrf_token3");
+                document.getElementById('idFrmFpiConfig').submit();
+            }
+        }
+    }
+    function pwrLedChkboxHide() {
+        document.getElementById('idAlwaysPwrActiveCell').style.visibility = 'hidden';
+    }
+    function pwrLedChkboxUnhide() {
+        document.getElementById('idAlwaysPwrActiveCell').style.visibility = 'visible';
+    }
+    </script>
+
+        <script type="text/javascript" src="/validation.js"></script>
+    <link rel="stylesheet" href="/arris_style.css">
+    <style>
+    thead td {
+        text-align: center;
+    }
+    </style>
+</head>
+
+<body class="T25" onload="onLoadPage()">
+<div class="wrapper">
+
+	<div class="header">
+	<div class="header_text">
+          <h1>Status</h1>
+          <a href="logout_cgi">Logout</a>
+	</div>
+	</div>
+
+	<div id="navbar">
+	<ul>
+	<li id="current"><a style="width: 20.00%;" href="status_cgi">Status</a></li>
+<li><a style="width: 20.00%;" href="vers_cgi">HW/FW Versions</a></li>
+<li><a style="width: 20.00%;" href="event_cgi">Event Log</a></li>
+<li><a style="width: 20.00%;" href="cm_state_cgi">CM State</a></li>
+<li><a style="width: 20.00%;" href="admin_cgi">Admin</a></li>
+
+	</ul>
+	</div>
+
+	<div class="main_body">
+	<p>
+	<!-- INSERT ARRIS PAGE CONTENT HERE -->
+
+<div class="heading1 spc0">
+  &nbsp;RF Parameters
+</div>
+
+<h4> Downstream QAM </h4>
+<table class="heading2 thinset spc0">
+<tbody>
+<tr>
+  <td></td>
+  <td>DCID</td>
+  <td>Freq</td>
+  <td>Power</td>
+  <td>SNR</td>
+  <td>Modulation</td>
+  <td>Octets</td>
+  <td>Correcteds</td>
+  <td>Uncorrectables</td>
+</tr>
+<tr><td>Downstream 1</td><td>17</td><td>489.00 MHz</td><td>-3.50 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>186795616</td><td>8</td><td>0</td></tr><tr><td>Downstream 2</td><td>14</td><td>471.00 MHz</td><td>-3.70 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>168497</td><td>0</td><td>0</td></tr><tr><td>Downstream 3</td><td>15</td><td>477.00 MHz</td><td>-3.70 dBmV</td><td>40.95 dB</td><td>256QAM</td><td>139285</td><td>0</td><td>0</td></tr><tr><td>Downstream 4</td><td>16</td><td>483.00 MHz</td><td>-3.50 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>160394</td><td>0</td><td>0</td></tr><tr><td>Downstream 5</td><td>18</td><td>495.00 MHz</td><td>-3.30 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>138769</td><td>0</td><td>0</td></tr><tr><td>Downstream 6</td><td>19</td><td>507.00 MHz</td><td>-3.10 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>106571</td><td>1</td><td>0</td></tr><tr><td>Downstream 7</td><td>20</td><td>513.00 MHz</td><td>-3.40 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>139544</td><td>0</td><td>0</td></tr><tr><td>Downstream 8</td><td>21</td><td>519.00 MHz</td><td>-3.60 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>317486</td><td>0</td><td>0</td></tr><tr><td>Downstream 9</td><td>22</td><td>525.00 MHz</td><td>-3.90 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>18367</td><td>0</td><td>0</td></tr><tr><td>Downstream 10</td><td>23</td><td>531.00 MHz</td><td>-4.00 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>37739</td><td>0</td><td>0</td></tr><tr><td>Downstream 11</td><td>24</td><td>537.00 MHz</td><td>-4.40 dBmV</td><td>38.61 dB</td><td>256QAM</td><td>40691</td><td>0</td><td>0</td></tr><tr><td>Downstream 12</td><td>25</td><td>543.00 MHz</td><td>-4.60 dBmV</td><td>40.37 dB</td><td>256QAM</td><td>91669167</td><td>1</td><td>0</td></tr><tr><td>Downstream 13</td><td>26</td><td>549.00 MHz</td><td>-4.90 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>28799</td><td>0</td><td>0</td></tr><tr><td>Downstream 14</td><td>27</td><td>555.00 MHz</td><td>-4.90 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>52939</td><td>0</td><td>0</td></tr><tr><td>Downstream 15</td><td>28</td><td>561.00 MHz</td><td>-4.80 dBmV</td><td>38.61 dB</td><td>256QAM</td><td>39824</td><td>0</td><td>0</td></tr><tr><td>Downstream 16</td><td>29</td><td>567.00 MHz</td><td>-4.80 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>315753</td><td>0</td><td>0</td></tr><tr><td>Downstream 17</td><td>30</td><td>573.00 MHz</td><td>-4.80 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>46789</td><td>0</td><td>0</td></tr><tr><td>Downstream 18</td><td>31</td><td>579.00 MHz</td><td>-4.90 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>140601</td><td>0</td><td>0</td></tr><tr><td>Downstream 19</td><td>32</td><td>585.00 MHz</td><td>-5.20 dBmV</td><td>38.61 dB</td><td>256QAM</td><td>219545</td><td>1</td><td>0</td></tr><tr><td>Downstream 20</td><td>34</td><td>591.00 MHz</td><td>-5.70 dBmV</td><td>38.61 dB</td><td>256QAM</td><td>90839415</td><td>2</td><td>0</td></tr><tr><td>Downstream 21</td><td>35</td><td>597.00 MHz</td><td>-6.10 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>208132</td><td>0</td><td>0</td></tr><tr><td>Downstream 22</td><td>36</td><td>603.00 MHz</td><td>-6.60 dBmV</td><td>38.61 dB</td><td>256QAM</td><td>201900</td><td>0</td><td>0</td></tr><tr><td>Downstream 23</td><td>37</td><td>609.00 MHz</td><td>-6.70 dBmV</td><td>38.61 dB</td><td>256QAM</td><td>230288</td><td>0</td><td>0</td></tr><tr><td>Downstream 24</td><td>38</td><td>615.00 MHz</td><td>-6.60 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>361652</td><td>0</td><td>0</td></tr><tr><td>Downstream 25</td><td>39</td><td>621.00 MHz</td><td>-6.40 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>193244</td><td>0</td><td>0</td></tr><tr><td>Downstream 26</td><td>40</td><td>627.00 MHz</td><td>-6.00 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>82509</td><td>0</td><td>0</td></tr><tr><td>Downstream 27</td><td>41</td><td>633.00 MHz</td><td>-5.70 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>67619</td><td>0</td><td>0</td></tr><tr><td>Downstream 28</td><td>42</td><td>639.00 MHz</td><td>-5.50 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>327838</td><td>0</td><td>0</td></tr><tr><td>Downstream 29</td><td>43</td><td>645.00 MHz</td><td>-5.30 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>184044</td><td>0</td><td>0</td></tr><tr><td>Downstream 30</td><td>44</td><td>651.00 MHz</td><td>-5.80 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>116365</td><td>0</td><td>0</td></tr><tr><td>Downstream 31</td><td>45</td><td>657.00 MHz</td><td>-6.00 dBmV</td><td>38.98 dB</td><td>256QAM</td><td>171981</td><td>1</td><td>0</td></tr>
+</tbody>
+</table>
+<table width="770" border="0"><tr><td align="right">
+<form name="clear" action="status_cgi" method=post onsumbit="return addCsrfToken('csrf_token')">
+    <a href="javascript: clearcounters()">Reset FEC Counters</a>
+    <input type="hidden" name="csrf_token" id="csrf_token" value="" />
+</form>
+</td></tr></table>
+
+<h4> Downstream OFDM </h4>
+ <table class="heading2 thinset spc0">
+ <thead>
+ <tr>
+  <td rowspan="2"></td>
+  <td rowspan="2">FFT Type</td>
+  <td rowspan="2">Channel Width(MHz)</td>
+  <td rowspan="2"># of Active Subcarriers</td>
+  <td rowspan="2">First Active Subcarrier(MHz)</td>
+  <td rowspan="2">Last Active Subcarrier(MHz)</td>
+  <td colspan="3">Average RxMER(dB)</td>
+</tr>
+<tr>
+  <td>Pilot</td>
+  <td>PLC</td>
+  <td>Data</td>
+</tr>
+</thead>
+<tbody>
+<tr><td>Downstream 2</td><td>4K</td><td>94</td><td>1880</td><td>661</td><td>754</td><td>46</td><td>40</td><td>40</td></tr>
+</tbody>
+</table>
+<table width="770" border="0"><tr><td align="right">
+</td></tr></table>
+
+<h4> Upstream QAM </h4>
+<table class="heading2 thinset spc0">
+<tbody>
+<tr>
+  <td></td>
+  <td>UCID</td>
+  <td>Freq</td>
+  <td>Power</td>
+  <td>Channel Type</td>
+  <td>Symbol Rate</td>
+  <td>Modulation</td>
+</tr>
+<tr><td>Upstream 1</td><td>45</td><td>36.50 MHz</td><td>40.50 dBmV</td><td>DOCSIS2.0 (ATDMA)</td><td>5120 kSym/s</td><td>64QAM</td></tr><tr><td>Upstream 2</td><td>48</td><td>17.30 MHz</td><td>38.50 dBmV</td><td>DOCSIS2.0 (ATDMA)</td><td>5120 kSym/s</td><td>64QAM</td></tr><tr><td>Upstream 3</td><td>47</td><td>23.70 MHz</td><td>39.25 dBmV</td><td>DOCSIS2.0 (ATDMA)</td><td>5120 kSym/s</td><td>64QAM</td></tr><tr><td>Upstream 4</td><td>46</td><td>30.10 MHz</td><td>40.00 dBmV</td><td>DOCSIS2.0 (ATDMA)</td><td>5120 kSym/s</td><td>64QAM</td></tr>
+</tbody>
+</table>
+
+<h4> Upstream OFDM </h4>
+ <table class="heading2 thinset spc0">
+ <tbody>
+ <tr>
+  <td></td>
+  <td>FFT Type</td>
+  <td>Channel Width(MHz)</td>
+  <td># of Active Subcarriers</td>
+  <td>First Active Subcarrier(MHz)</td>
+  <td>Last Active Subcarrier(MHz)</td>
+  <td>Tx Power(dBmV)</td>
+</tr>
+
+</tbody>
+</table>
+
+<br><br>
+
+
+<div class="heading1 spc0">
+  &nbsp;Status
+</div>
+<br>
+<table cellpadding="0" cellspacing="0">
+<tbody><tr><td width="160">System Uptime: </td><td>1 d: 21 h: 47 m</td></tr>
+<tr><td width="160">Computers Detected:</td><td>staticCPE(1), dynamicCPE(1)
+</td></tr>
+<tr><td width="160">CM Status:</td><td>Telephony-Reg Complete</td></tr>
+<tr><td width="160">Time and Date:</td><td>Fri 2022-04-15 12:18:50</td></tr>
+
+</tbody></table><br><br>
+
+<div class='heading1 spc0'>
+  &nbsp;Energy Efficient Ethernet
+</div>
+<table cellspacing=0 cellpadding=0 cols="1" width=770 border="1px solid;"><tr><td>
+<table cellspacing=0 cellpadding=5>
+<td><tr>
+<form method="POST" onsubmit="return addCsrfToken('csrf_token2')">
+<table cellspacing=0 cellpadding=8>
+
+<tr>
+   <td></td>
+   <td>&nbsp;&nbsp;LAN Port 1</td>
+   <td>
+    <input type='checkbox' name='eee_port_1' >
+   </td>
+
+<td rowspan=1>&nbsp;&nbsp;&nbsp;
+  <input type="submit" name="eee_port_apply" value="Apply">
+</td>
+</tr>
+
+<tr>
+   <td></td>
+   <td>&nbsp;&nbsp;LAN Port 2</td>
+   <td>
+    <input type='checkbox' name='eee_port_2' >
+   </td>
+</tr>
+</table>
+<input type="hidden" name="csrf_token2" id="csrf_token2" value="" />
+</form><br>
+</td></tr></table>
+</td></tr</table><br><br>
+
+
+<div class='heading1 spc0'>
+  &nbsp;Front Panel Indicators
+</div>
+
+<form method='post' id='idFrmFpiConfig' action='status_cgi'>
+  <table cellpadding='10' cellspacing='0' cols='1' width='770' border='1px solid'>
+    <tbody>
+      <tr>
+        <td>
+          <br>
+          <table style='padding: 10px; border: 1px solid silver; margin-left: 20px'>
+            <tbody>
+              <tr>
+                <td style='padding-bottom: 1em' align='left'>
+                  Front Panel Indicator Configuration:&nbsp;
+                  <div class='tooltip'>
+                    <span style='font-size:24px'>
+                      &#x24D8;
+                    </span>
+                    <div class='bottom'>
+                      In "<u>Always Active</u>" operation, the front panel indicators operate normally at
+                      all times. In this mode,
+                      the "Power Indicator Always Active" checkbox has no bearing on operation, and is
+                      hidden to minimize confusion.
+                      <p>
+                        The following two modes are affected by the "Power Indicator Always Active" checkbox:
+                      </p>
+                      <p>
+                        In "<u>Active on Alerts</u>" operation, all the front panel indicators (except the
+                        power indicator if the checkbox is enabled) are off. The exception to this rule is
+                        when an alarm condition associated with any indicator exists, in which case all
+                        indicators show current status.
+                      </p>
+                      <p>
+                        In "<u>Off</u>" operation, all front panel indicators (except the power
+                        indicator if the checkbox is enabled) are always off, regardless of alarm conditions.
+                      </p>
+                      <p>
+                        <b>Disclaimer:</b>
+                        Be advised that no indications of alarm conditions will be displayed on the front
+                        panel in the "<u>Off</u>" mode of operation.
+                        <i/>
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                </td>
+              </tr>
+              <tr>
+                <td colspan='2' align='left'>
+                  <table cellpadding='4' cellspacing='0'>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <input type='radio' id='idOpNormal' name='fpiModeRadio' value='0' onclick='pwrLedChkboxHide()' >
+                          Always Active
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <input type='radio' id='idOpAlert' name='fpiModeRadio' value='1' onclick='pwrLedChkboxUnhide()' checked>
+                          Active on Alerts
+                          <br>
+                        </td>
+                        <td rowspan='2' style='text-indent: 10px; padding-bottom: 1em'>
+                          <span id='idAlwaysPwrActiveCell' style='visibility: visible'>
+                            <input type='checkbox' name='fpiModeChkbox' id='idPaaCheck' >
+                            Power Indicator Always Active
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style='width: 22ch'>
+                          <input type='radio' id='idOpDisabled' name='fpiModeRadio' value='2' onclick='pwrLedChkboxUnhide()' >
+                          Off
+                        </td>
+                        <td>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td colspan='2' style='padding-right:20px' align='right'>
+                  <button type='button' onclick='fpiConfirm()'>
+                    Apply
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <br>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <input type="hidden" name="csrf_token3" id="csrf_token3" value=""/>
+</form>
+<br><br>
+<script>setFpiState(1, 0);</script>
+
+<div class="heading1 spc0">
+  &nbsp;Product Type
+</div>
+<br>
+Product Type:</b> HELDFORPRIVACY HELDFORPRIVACY
+<table CELLSPACING=0 CELLPADDING=0 >
+    <tr><td width="160">Hardware Model</td><td>T25</td></tr>
+    <tr><td width="160">Hardware Info</td><td>ARRIS DOCSIS 3.1 / PacketCable 2.0 Touchstone Telephony Modem / Retail</td></tr>
+    <tr><td width="160">Eth Sw Port 1</td><td>ENABLED</td></tr>
+    <tr><td width="160">Ethernet Phy Type</td><td>Realtek 1x2-port switch</td></tr>
+    <tr><td width="160">Router</td><td>DISABLED</td></tr>
+    <tr><td width="160">Telemetry</td><td>DISABLED</td></tr>
+    <tr><td width="160">Line Card</td><td>ENABLED</td></tr>
+    <tr><td width="160">Num Lines</td><td>2</td></tr>
+    <tr><td width="160">RF HW</td><td>MAXLINEAR</td></tr>
+    <tr><td width="160">Market</td><td>North America</td></tr>
+</table><br><br>
+<div class="heading1 spc0">
+  &nbsp;Interface Parameters
+</div>
+
+   <table cellpadding='10' cellspacing='0' cols='1' width='770' border='1px solid'>
+   <tr><td>
+   <table cellpadding='10' cellspacing='0'>
+    <tr>
+     <td>
+      <form method='post' id='idLinkAgg' action='status_cgi'>
+       <table>
+        <tr>
+         <td>
+          <input type='text' id='idLagTxtbox' hidden='true' name='lag_enable_form' value='submit'>&nbsp;
+          <input type='checkbox' id='idLagChkbox' name='lag_enable' checked value='1'>&nbsp;
+          <label>Link Aggregation</label>&nbsp;
+          <div class='tooltip'>
+           <span style='font-size:24px'>&#9432;</span>
+           <div class='bottom'>
+            Link Aggregation is a means of obtaining a fatter pipe for transmission of data 
+between the modem and another device configured in a compatible manner. Link 
+Aggregation is also known as <em>Ethernet Bonding</em>, <em>Port Bonding</em>, 
+<em>NIC Bonding</em>, and <em>Port Trunking</em>, among other things. This 
+modem supports Link Aggregation Control Protocol (LACP), which is an IEEE 
+standard defined in IEEE 802.3ad. It may be referred to as Dynamic or Mode 4 
+Link Aggregation by some equipment vendors. When Link Aggregation is enabled, 
+a single logical link is created between the modem and the other networked 
+device, which takes advantage of the bandwidth of two physical Ethernet ports, 
+providing increased capacity and fault tolerance. Before enabling Link 
+Aggregation, make sure the device you are connecting to the two local Ethernet 
+ports also supports LACP.
+           </div>
+          </div>
+         </td>
+         <td width='20px'>
+         </td>
+         <td>
+         </td>
+        </tr height='40px'>
+        <tr>
+         <td colspan='2'>
+         </td>
+         <td>
+          <input type="hidden" name="csrf_token4" id="csrf_token4" value="" />
+          <input type='button' id='idBtnApplyLag' name='lag_enable_apply' value='Apply'>
+         </td>
+        </tr>
+       </table>
+      </form>
+     </td>
+     <td>&nbsp;</td>
+     <td>&nbsp;</td>
+    </tr>
+   </table>
+   </td></tr>
+   </table>
+
+<table border="2" width="769">
+  <tbody><tr>
+    <td width="100">Interface Name</td>
+    <td width="90">Provisioned</td>
+    <td width="60">State</td>
+    <td width="100">Speed (Mbps)</td>
+    <td width="144">MAC address</td></tr>
+  <tr><td>LAN Port 1</td><td>Enabled (LAG)</td><td>Up</td><td>1000 (Full)</td><td>00:00:00:00:00:00</td></tr> <tr><td>LAN Port 2</td><td>Enabled (LAG)</td><td>Up</td><td>1000 (Full)</td><td>00:00:00:00:00:00</td></tr>
+    <tr><td>CABLE</td>
+    <td>Enabled</td>
+    <td>Up</td>
+    <td>-----</td>
+    <td>00:00:00:00:00:00</td>
+    </tr>
+
+  <tr>
+    <td>MTA</td>
+    <td>Pass</td>
+    <td>Up</td>
+    <td>-----</td>
+    <td>00:00:00:00:00:00</td>
+  </tr></tbody>
+</table>
+<br><br>
+<div class="heading1 spc0">
+  &nbsp;Diplexer
+</div>
+<table border="2" cellpadding="0" cellspacing="0" width="770">
+  <tbody>
+  <tr>
+    <td></td>
+    <td>Upstream Range</td>
+    <td>Downstream Range</td>
+    <td>Current Band Setting</td>
+  </tr>
+<tr><td>Band 0</td><td>5 MHz-85 MHz    </td><td>108 MHz-1002 MHz</td><td> </td></tr><tr><td>Band 1</td><td>5 MHz-42 MHz    </td><td>108 MHz-1002 MHz</td><td>X</td></tr>
+  </tbody>
+</table>
+
+<br><br>
+<table class="heading1 spc0" cols="1"><tbody>
+  <tr>
+    <td width="770"><b><font color="#ffffff" size="+1">&nbsp;VoIP</font></b></td>
+    <td width="770"><b><font color="#ffffff" size="+1">&nbsp;High Definition Audio</font></b></td>
+    <td width="770"><b><font color="#ffffff" size="+1">&nbsp; </font></b></td>
+  </tr></tbody>
+</table>
+<table cellPadding=2 border=1 width="770">
+  <tr>
+    <td>Line</td>
+    <td>LC State</td>
+    <td>CallP State</td>
+    <td>Loop Current</td>
+    <td>HD Status</td>
+    <td>WB SLIC</td>
+    <td>HD Enable</td>
+    <td>HD EndPnt Enable</td>
+    <td>HD Codec Provisioned</td>
+<!--    <td> PrimaryCodec</td>-->
+  </tr>
+<tr><td align="center">1</td><td>Idle</td><td>Idle</td><td>Boosted</td><td>Enabled</td><td>Enabled</td><td>Enabled</td><td>Enabled</td><td>Yes</td></tr><tr><td align="center">2</td><td>Idle</td><td>Idle</td><td>Boosted</td><td>Enabled</td><td>Enabled</td><td>Enabled</td><td>Enabled</td><td>Yes</td></tr>
+</table>
+
+
+<br>
+	<!-- END ARRIS PAGE CONTENT -->
+	</p>
+	</div> <!-- main_body -->
+
+	<div class="push"></div>
+</div> <!-- wrapper -->
+<div class="footer">
+    &copy; 2020 ARRIS Enterprises, LLC.  All rights reserved.
+</div>
+</body>
+</html>
+
+

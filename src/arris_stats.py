@@ -16,7 +16,6 @@ import configparser
 import urllib3
 import requests
 
-
 # To add a new modem, add the model below
 # Create a new file src/arris_stats_themodel.py and a parse_html_themodel.py function
 # Use a debugger and set a break point just after the html = get_html(config, credential) line
@@ -27,7 +26,8 @@ import requests
 # bash tests/run_tests.sh
 modems_supported = [
     'sb8200',
-    'sb6183'
+    'sb6183',
+    't25'
 ]
 
 
@@ -65,7 +65,8 @@ def main():
 
         if config['modem_auth_required']:
             while not token:
-                token = get_token(config, session)
+                token_func = config['get_token_function'] or get_token
+                token = token_func(config, session)
                 if not token and config['exit_on_auth_error']:
                     error_exit('Unable to authenticate with modem.  Exiting since exit_on_auth_error is True', config)
                 if not token:
@@ -210,7 +211,10 @@ def get_config(config_path=None):
     # If you're adding new modems and get an error about no module, create src/arris_stats_yourmodel.py
     module = __import__('arris_stats_' + config['modem_model'])
     config['parse_html_function'] = getattr(module, 'parse_html_' + config['modem_model'])
-
+    try:
+        config['get_token_function'] = getattr(module, 'get_token_' + config['modem_model'])
+    except AttributeError:
+        config['get_token_function'] = None
     return config
 
 
