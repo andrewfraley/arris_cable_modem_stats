@@ -39,8 +39,6 @@ Run in a Docker container with the following (see other environment variables in
     --restart unless-stopped \
     arris_stats
 
-Note that the same parameters from config.ini can be set as ENV variables, ENV overrides config.ini.
-
 ## Run Locally
 
 - Install Python 3.8.x or later
