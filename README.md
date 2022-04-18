@@ -2,6 +2,11 @@
 
 This is a Python script to scrape stats from the Arris cable modem web interface.  Results are meant to be sent to InfluxDB for use with Grafana, but also currently supports AWS Timestream and Splunk.  This currently only works with the Arris SB8200 and SB6183.  Credit goes to https://github.com/billimek/SB6183-stats-for-influxdb
 
+## Modems Supported
+
+- SB8200
+- SB6183
+- T25
 
 ## Authentication
 In late Oct 2020, Comcast deployed firmware updates to the SB8200 which now require authenticating against the modem.  If your modem requires authentication (you get a login page when browsing to https://192.168.100.1/), then you must edit your config.ini file (or set the matching ENV variables) and set ```modem_auth_required``` to ```True```, and set ```modem_password``` appropriately.  By default, your modem's password is the last eight characters of the serial number, located on a sticker on the bottom of the modem.
@@ -74,7 +79,7 @@ Config settings can be provided by the config.ini file, or set as ENV variables.
 - modem_username = admin
 - modem_password = None
 - modem_model = sb8200
-    - models supported: sb6183, sb8200
+    - models supported: sb6183, sb8200, t25
 - exit_on_auth_error = True
     - Any auth error will cause an exit, useful when running in a Docker container to get a new session
 - exit_on_html_error = True
