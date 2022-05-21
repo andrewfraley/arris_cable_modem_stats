@@ -95,9 +95,12 @@ def main():
             continue
 
         # Where should 6we send the results?
-        if destination == 'influxdb':
-            import arris_stats_influx  # pylint: disable=import-outside-toplevel
-            arris_stats_influx.send_to_influx(stats, config)
+        if destination == 'influxdb' and config['influx_major_version'] == 1:
+            import arris_stats_influx1  # pylint: disable=import-outside-toplevel
+            arris_stats_influx1.send_to_influx(stats, config)
+        elif destination == 'influxdb' and config['influx_major_version'] == 2:
+            import arris_stats_influx2  # pylint: disable=import-outside-toplevel
+            arris_stats_influx2.send_to_influx(stats, config)
         elif destination == 'timestream':
             import arris_stats_aws_timestream  # pylint: disable=import-outside-toplevel
             arris_stats_aws_timestream.send_to_aws_time_stream(stats, config)
@@ -136,6 +139,7 @@ def get_default_config():
         'sleep_before_exit': True,
 
         # Influx
+        'influx_major_version': 1,
         'influx_host': 'localhost',
         'influx_port': 8086,
         'influx_database': 'cable_modem_stats',
@@ -143,6 +147,10 @@ def get_default_config():
         'influx_password': None,
         'influx_use_ssl': False,
         'influx_verify_ssl': True,
+        'influx_org': None,
+        'influx_url': 'http://localhost:8086',
+        'influx_bucket': 'cable_modem_stats',
+        'influx_token': None,
 
         # AWS Timestream
         'timestream_aws_access_key_id': None,
