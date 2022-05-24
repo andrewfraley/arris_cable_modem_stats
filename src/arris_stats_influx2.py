@@ -1,7 +1,10 @@
 """
-    Influx functions
+    Influx 2.x functions
 
     https://github.com/andrewfraley/arris_cable_modem_stats
+
+    Thank you to Chris Schuld (https://github.com/cbschuld) for the Influx 2.x changes
+
 """
 # pylint: disable=line-too-long
 
