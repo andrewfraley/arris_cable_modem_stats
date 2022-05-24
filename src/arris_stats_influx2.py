@@ -10,7 +10,7 @@
 
 import logging
 from datetime import datetime
-from influxdb_client import InfluxDBClient, BucketRetentionRules
+from influxdb_client import InfluxDBClient
 from influxdb_client.client.exceptions import InfluxDBError
 from influxdb_client.client.write_api import SYNCHRONOUS
 
