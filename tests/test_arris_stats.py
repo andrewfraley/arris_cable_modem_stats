@@ -92,7 +92,7 @@ class TestArrisStats(unittest.TestCase):
                 if re.match(r'\s*\S.+=\S.', line):
                     env_lines.append(line.split(' \\')[0].strip())
                 # If the line isn't just whitespace or a comment, consider this the end of the ENV block
-                elif line.strip() == '' or re.match(r'^#', line.strip()):
+                elif line.strip() == '' or re.match(r'^#', line.strip()) or re.match(r'^\\', line.strip()):
                     continue
                 else:
                     break
@@ -114,8 +114,11 @@ class TestArrisStats(unittest.TestCase):
         with open(path, "r") as configfile:
             config_contents = configfile.read().splitlines()
         for line in config_contents:
-            param = line.split(' = ')[0]
-            value = line.split(' = ')[1]
+            linesplit = line.split(' = ')
+            if len(linesplit) != 2:
+                continue
+            param = linesplit[0]
+            value = linesplit[1]
             self.assertEqual(str(default_config[param]), value)  # Param is in config file but not default_config, or default values do not match
             del default_config[param]  # Delete it once found so we can identify missing params
 
