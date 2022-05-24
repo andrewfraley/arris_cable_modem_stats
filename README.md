@@ -14,7 +14,7 @@ In late Oct 2020, Comcast deployed firmware updates to the SB8200 which now requ
 In October of 2021, Comcast again deployed new firmware that changed how authentication is handled.  The old login method is no longer supported, but if you are with a different carrier and still need the old login functionality, use release v1.2.0.  I have no way to test the old auth scheme, which is why it's no longer supported.
 
 ## InfluxDB 1.x vs 2.x
-This supports both InfluxDB 1.x and InfluxDB 2.x.  See the Config Settings below for options.  With InfluxDB 1.x, ```influx_host``` is the only required setting if your Influx server does not require authentication.  It will attempt to create the database if it doesn't exist.  For InfluxDB 2.x, change ```influx_major_version``` to ```2```, and also supply your url, org, bucket, and token with write access with the appropriate settings outlined below.
+This supports both InfluxDB 1.x and InfluxDB 2.x.  See the Config Settings section below for options.  With InfluxDB 1.x, ```influx_host``` is the only required setting if your Influx server does not require authentication.  It will attempt to create the database if it doesn't exist.  For InfluxDB 2.x, change ```influx_major_version``` to ```2```, and also supply your url, org, bucket, and token with write access with the appropriate settings outlined below.
 
 ## Run with Docker
 
