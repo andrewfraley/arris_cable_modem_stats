@@ -7,8 +7,9 @@
 
 import logging
 from datetime import datetime
-from influxdb import InfluxDBClient
-from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
+from influxdb_client import InfluxDBClient, BucketRetentionRules
+from influxdb_client.client.exceptions import InfluxDBError
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 
 def send_to_influx(stats, config):
@@ -16,13 +17,11 @@ def send_to_influx(stats, config):
     logging.info('Sending stats to InfluxDB (%s:%s)', config['influx_host'], config['influx_port'])
 
     influx_client = InfluxDBClient(
-        config['influx_host'],
-        config['influx_port'],
-        config['influx_username'],
-        config['influx_password'],
-        config['influx_database'],
-        config['influx_use_ssl'],
-        config['influx_verify_ssl'],
+        url=config['influx_url'],
+        token=config['influx_token'],
+        org=config['influx_org'],
+        bucket=config['influx_bucket'],
+        verify_ssl=config['influx_verify_ssl'],
     )
 
     series = []
@@ -65,20 +64,15 @@ def send_to_influx(stats, config):
         series.append(record)
 
     try:
-        influx_client.write_points(series)
-    except (InfluxDBClientError, ConnectionError, InfluxDBServerError, ConnectionRefusedError) as exception:
-
-        # If DB doesn't exist, try to create it
-        if hasattr(exception, 'code') and exception.code == 404:
-            logging.warning('Database %s Does Not Exist.  Attempting to create database',
-                            config['influx_database'])
-            influx_client.create_database(config['influx_database'])
-            influx_client.write_points(series)
-        else:
-            logging.error(exception)
-            logging.error('Failed To Write To InfluxDB')
-            return
+        write_api = influx_client.write_api(write_options=SYNCHRONOUS)
+        write_api.write(record=series, bucket=config['influx_bucket'])
+    except (InfluxDBError, ConnectionError, ConnectionRefusedError) as exception:
+        logging.error('Failed To Write To InfluxDB')
+        logging.error(exception)
+        return
 
     logging.info('Successfully wrote data to InfluxDB')
     logging.debug('Influx series sent to db:')
     logging.debug(series)
+
+    influx_client.close()
