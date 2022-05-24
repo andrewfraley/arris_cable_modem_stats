@@ -92,7 +92,7 @@ class TestArrisStats(unittest.TestCase):
                 if re.match(r'\s*\S.+=\S.', line):
                     env_lines.append(line.split(' \\')[0].strip())
                 # If the line isn't just whitespace or a comment, consider this the end of the ENV block
-                elif line.strip() == '' or re.match(r'^#', line.strip()):
+                elif line.strip() == '' or re.match(r'^#', line.strip()) or re.match(r'^\\', line.strip()):
                     continue
                 else:
                     break
