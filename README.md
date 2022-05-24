@@ -13,6 +13,8 @@ In late Oct 2020, Comcast deployed firmware updates to the SB8200 which now requ
 
 In October of 2021, Comcast again deployed new firmware that changed how authentication is handled.  The old login method is no longer supported, but if you are with a different carrier and still need the old login functionality, use release v1.2.0.  I have no way to test the old auth scheme, which is why it's no longer supported.
 
+## InfluxDB 1.x vs 2.x
+This supports both InfluxDB 1.x and InfluxDB 2.x.  See the Config Settings below for options.  With InfluxDB 1.x, ```influx_host``` is the only required setting if your Influx server does not require authentication.  It will attempt to create the database if it doesn't exist.  For InfluxDB 2.x, change ```influx_major_version``` to ```2```, and also supply your url, org, bucket, and token with write access with the appropriate settings outlined below.
 
 ## Run with Docker
 
@@ -62,49 +64,61 @@ Run in a Docker container with the following (see other environment variables in
 ## Config Settings
 Config settings can be provided by the config.ini file, or set as ENV variables.  If you run arris_stats.py with --config config.ini, ENV settings will be ignored.
 
-- arris_stats_debug = False
+- ```arris_stats_debug = False```
     - enables debug logs
-- destination = influxdb
+- ```destination = influxdb```
     - Valid options include:
-      - influxdb - requires all influx_* params to be populated
-      - timestream - requires all timestream_* params to be populated
-      - splunk - requires all splunk_* params to be populated
-- sleep_interval = 300
-- modem_url = https://192.168.100.1/cmconnectionstatus.html
-    - url for sb6183 = http://192.168.100.1/RgConnect.asp
-- modem_verify_ssl = False
-- modem_auth_required = False
-- modem_username = admin
-- modem_password = None
-- modem_model = sb8200
-    - models supported: sb6183, sb8200, t25
-- exit_on_auth_error = True
+      - ```influxdb``` requires all influx_* params to be populated
+      - ```timestream``` requires all timestream_* params to be populated
+      - ```splunk``` requires all splunk_* params to be populated
+- ```sleep_interval = 300```
+- ```modem_url = https://192.168.100.1/cmconnectionstatus.html```
+    - url for sb6183 = ```http://192.168.100.1/RgConnect.asp```
+- ```modem_verify_ssl = False```
+- ```modem_auth_required = False```
+- ```modem_username = admin```
+- ```modem_password = None```
+- ```modem_model = sb8200```
+    - models supported: ```sb6183```, ```sb8200```, ```t25```
+- ```exit_on_auth_error = True```
     - Any auth error will cause an exit, useful when running in a Docker container to get a new session
-- exit_on_html_error = True
+- ```exit_on_html_error = True```
     - Any error retrieving the html will cause an exit, mostly redundant with exit_on_auth_error
-- clear_auth_token_on_html_error = True
+- ```clear_auth_token_on_html_error = True```
     - This is useful if you don't want to exit, but do want to get a new session if/when getting the stats fails
-- sleep_before_exit = True
+- ```sleep_before_exit = True```
     - If you want to sleep before exiting on errors, useful for Docker container when you have restart = always
-- influx_host = localhost
-- influx_port = 8086
-- influx_database = cable_modem_stats
-    - This will be created automatically if it can
-- influx_username = None
-- influx_password = None
-- influx_use_ssl = False
-- influx_verify_ssl = True
-- timestream_aws_access_key_id = None
-- timestream_aws_secret_access_key = None
-- timestream_database = cable_modem_stats
-- timestream_table = cable_modem_stats
-- timestream_aws_region = us-east-1
-- splunk_host = None
-- splunk_port = 8088
-- splunk_token = None
-- splunk_ssl = False
-- splunk_verify_ssl = True
-- splunk_source = arris_cable_modem_stats
+- Influx Settings
+    - Global Influx settings
+        - ```influx_major_version = 1``` Influx major version 1.x or 2.x
+        - ```influx_verify_ssl = True```
+    - Influx 1.x Settings
+        - ```influx_host = localhost```
+        - ```influx_port = 8086```
+        - ```influx_database = cable_modem_stats``` This will be created automatically if it can
+        - ```influx_username = None```
+        - ```influx_password = None```
+        - ```influx_use_ssl = False```
+    - Influx 2.x Settings (All settings are required)
+        - ```influx_org = None```
+        - ```influx_url = http://influx.localdomain:8086```
+        - ```influx_bucket = cable_modem_stats```  Must already exist, token must have write access
+        - ```influx_token = None```
+
+
+- AWS Timestream Settings
+    - ```timestream_aws_access_key_id = None```
+    - ```timestream_aws_secret_access_key = None```
+    - ```timestream_database = cable_modem_stats```
+    - ```timestream_table = cable_modem_stats```
+    - ```timestream_aws_region = us-east-1```
+- Splunk Settings
+    - ```splunk_host = None```
+    - ```splunk_port = 8088```
+    - ```splunk_token = None```
+    - ```splunk_ssl = False```
+    - ```splunk_verify_ssl = True```
+    - ```splunk_source = arris_cable_modem_stats```
 
 
 ### Debugging
