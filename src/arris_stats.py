@@ -39,8 +39,7 @@ def main():
     config_path = args.config
     config = get_config(config_path)
 
-    init_logger(args.debug or config.get('arris_stats_debug'),
-                args.info or config.get('arris_stats_info'))
+    init_logger(args.log_level or config.get('log_level'))
 
     sleep_interval = int(config['sleep_interval'])
     destination = config['destination']
@@ -115,9 +114,11 @@ def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=False)
-    parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
-    parser.add_argument('--info', help='Enable info logging', action='store_true', required=False, default=False)
+    parser.add_argument('--debug', help='Set log_level to DEBUG', action='store_true', required=False, default=False)
+    parser.add_argument('--log-level', help='Set log_level', action='store', type=str.lower, required=False, choices=["debug", "info", "warning", "error"])
     args = parser.parse_args()
+    if args.debug:
+        args.log_level = "debug"
     return args
 
 
@@ -125,6 +126,7 @@ def get_default_config():
     return {
 
         # Main
+        'log_level': "info",
         'arris_stats_debug': False,
         'destination': 'influxdb',
         'sleep_interval': 300,
@@ -342,17 +344,21 @@ def str_to_bool(string, name):
     raise ValueError('Config parameter % s should be boolean "true" or "false", but value is neither of those.' % name)
 
 
-def init_logger(debug=False, info=False):
+def init_logger(log_level="info"):
     """ Start the python logger """
     log_format = '%(asctime)s %(levelname)-8s %(message)s'
 
-    level = logging.ERROR
+    level = logging.INFO
 
-    if info:
-        level = logging.INFO
-    
-    if debug:
+    if log_level == "debug":
         level = logging.DEBUG
+    elif log_level == "info":
+        level = logging.INFO
+    elif log_level == "warning":
+        level = logging.WARNING
+    elif log_level == "error":
+        level = logging.ERROR
+    
 
     # https://stackoverflow.com/a/61516733/866057
     try:
