@@ -1,6 +1,6 @@
 FROM python:3.8-alpine
 
-ENV arris_stats_debug=False \
+ENV log_level=info \
   destination=influxdb \
   sleep_interval=300 \
   modem_url=https://192.168.100.1/cmconnectionstatus.html \

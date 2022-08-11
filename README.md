@@ -64,13 +64,18 @@ Run in a Docker container with the following (see other environment variables in
 ## Config Settings
 Config settings can be provided by the config.ini file, or set as ENV variables.  If you run arris_stats.py with --config config.ini, ENV settings will be ignored.
 
-- ```arris_stats_debug = False```
-    - enables debug logs
+- ```log_level = debug|info|warning|error```
+    - Valid options include:
+      - ```debug```
+      - ```info``` the default
+      - ```warning```
+      - ```error```
 - ```destination = influxdb```
     - Valid options include:
       - ```influxdb``` requires all influx_* params to be populated
       - ```timestream``` requires all timestream_* params to be populated
       - ```splunk``` requires all splunk_* params to be populated
+      - ```stdout_json``` will send the data to standard output in JSON format, great with ```log_level=error``` to suppress messages
 - ```sleep_interval = 300```
 - ```modem_url = https://192.168.100.1/cmconnectionstatus.html```
     - url for sb6183 = ```http://192.168.100.1/RgConnect.asp```

@@ -104,7 +104,7 @@ def main():
         elif destination == 'splunk':
             import arris_stats_splunk  # pylint: disable=import-outside-toplevel
             arris_stats_splunk.send_to_splunk(stats, config)
-        elif destination == 'stdout':
+        elif destination == 'stdout_json':
             print(json.dumps(stats))
         else:
             error_exit('Destination %s not supported!  Aborting.' % destination, sleep=False)
@@ -114,7 +114,6 @@ def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=False)
-    parser.add_argument('--debug', help='Set log_level to DEBUG', action='store_true', required=False, default=False)
     parser.add_argument('--log-level', help='Set log_level', action='store', type=str.lower, required=False, choices=["debug", "info", "warning", "error"])
     args = parser.parse_args()
     if args.debug:
@@ -127,7 +126,6 @@ def get_default_config():
 
         # Main
         'log_level': "info",
-        'arris_stats_debug': False,
         'destination': 'influxdb',
         'sleep_interval': 300,
         'modem_url': 'https://192.168.100.1/cmconnectionstatus.html',

@@ -1,4 +1,3 @@
-arris_stats_debug = False
 log_level = info
 destination = influxdb
 sleep_interval = 300
