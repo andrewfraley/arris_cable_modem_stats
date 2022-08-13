@@ -114,6 +114,7 @@ def get_args():
     """ Get argparser args """
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', metavar='config_file_path', help='Path to config file', required=False)
+    parser.add_argument('--debug', help='Enable debug logging', action='store_true', required=False, default=False)
     parser.add_argument('--log-level', help='Set log_level', action='store', type=str.lower, required=False, choices=["debug", "info", "warning", "error"])
     args = parser.parse_args()
     if args.debug:
@@ -356,7 +357,6 @@ def init_logger(log_level="info"):
         level = logging.WARNING
     elif log_level == "error":
         level = logging.ERROR
-    
 
     # https://stackoverflow.com/a/61516733/866057
     try:

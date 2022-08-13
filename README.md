@@ -132,8 +132,8 @@ You can enable debug logs in three ways:
 
 1. Use --debug when running from cli
     - ```python3 arris_stats.py --debug --config config.ini```
-2. Set ENV variable ```arris_stats_debug = true```
-3. Set config.ini ```arris_stats_debug = true```
+2. Set ENV variable ```log_level = debug```
+3. Set config.ini ```log_level = debug```
 
 ## Database Options
 
