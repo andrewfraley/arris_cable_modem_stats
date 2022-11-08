@@ -58,11 +58,12 @@ def parse_html_sb8200(html):
         if table_row.th:
             continue
 
+        channel_id = table_row.find_all('td')[1].text.strip()
+
         # Some firmwares have a header row not already skiped by "if table_row.th", skip it if channel_id isn't an integer
         if not channel_id.isdigit():
             continue
 
-        channel_id = table_row.find_all('td')[1].text.strip()
         frequency = table_row.find_all('td')[4].text.replace(" Hz", "").strip()
         power = table_row.find_all('td')[6].text.replace(" dBmV", "").strip()
 
