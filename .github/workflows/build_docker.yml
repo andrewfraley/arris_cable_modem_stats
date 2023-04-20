@@ -1,30 +1,51 @@
-name: Build docker
+name: Docker CICD
+
 on:
-  # Trigger the workflow on push or pull request,
-  # but only for the main branch
+  pull_request:
   push:
     branches:
       - main
     paths-ignore:
       - '**.md'
-  schedule:
-    - cron:  '15 20 1 * *'
+  release:
+    types: [created]
+
 jobs:
   docker:
+    name: Build Docker Image
     runs-on: ubuntu-latest
-    environment: main
     steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v2
+        if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push
-        uses: docker/build-push-action@v2
+      -
+        name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
         with:
-          push: true
-          tags: afraley/arris_cable_modem_stats:latest
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME || 'ci-build' }}/${{ github.event.repository.name }}
+          tags: |
+            type=raw,value=${{ github.event.release.tag_name || 'latest' }}
+      -
+        name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: ${{ github.event_name == 'push' || github.event_name == 'release' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      -
+        name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
