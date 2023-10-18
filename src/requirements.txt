@@ -27,5 +27,5 @@ splunk-hec-handler==1.1.0
 toml==0.10.2
 tomli==2.0.1
 typing-extensions==4.1.1
-urllib3==1.26.5
+urllib3==1.26.18
 wrapt==1.12.1
